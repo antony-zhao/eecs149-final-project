@@ -2,10 +2,6 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-SHELL = cmd.exe
-
-CG_TOOL_ROOT := E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS
-
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
 
@@ -52,8 +48,8 @@ $(GEN_CMDS__FLAG) \
 
 -include ../makefile.init
 
-RM := DEL /F
-RMDIR := RMDIR /S/Q
+RM := rm -rf
+RMDIR := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
@@ -160,12 +156,6 @@ Lab20_CC3100.out \
 EXE_OUTPUTS__QUOTED += \
 "Lab20_CC3100.out" \
 
-BIN_OUTPUTS += \
-Lab20_CC3100.hex \
-
-BIN_OUTPUTS__QUOTED += \
-"Lab20_CC3100.hex" \
-
 
 # All Target
 all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
@@ -175,20 +165,13 @@ all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 Lab20_CC3100.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: ARM Linker'
-	"E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --advice:power=all --define=__MSP432P401R__ --define=ccs -g --c99 --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"Lab20_CC3100.map" --heap_size=1024 --stack_size=512 -i"E:/ti/ccs900/ccs/ccs_base/arm/include" -i"E:/ti/ccs900/ccs/ccs_base/arm/include" -i"E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/lib" -i"E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="Lab20_CC3100_linkInfo.xml" --rom_model -o "Lab20_CC3100.out" $(ORDERED_OBJS)
+	"" -z -m"Lab20_CC3100.map" --heap_size=1024 --stack_size=512 -i"/home/antonyzhao/ti/ccstheia120/ccs/ccs_base/arm/include" -i"/home/antonyzhao/ti/ccstheia120/ccs/ccs_base/arm/include" -i"/lib" -i"/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="Lab20_CC3100_linkInfo.xml" --rom_model -o "Lab20_CC3100.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
-	@echo ' '
-
-Lab20_CC3100.hex: $(EXE_OUTPUTS)
-	@echo 'Building files: $(strip $(EXE_OUTPUTS__QUOTED))'
-	@echo 'Invoking: ARM Hex Utility'
-	"E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armhex" --memwidth=8 --romwidth=8 -o "Lab20_CC3100.hex" $(EXE_OUTPUTS__QUOTED)
-	@echo 'Finished building: $(strip $(EXE_OUTPUTS__QUOTED))'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
+	-$(RM) $(EXE_OUTPUTS__QUOTED)
 	-$(RM) "Bump.obj" "Clock.obj" "CortexM.obj" "LaunchPad.obj" "Motor.obj" "PWM.obj" "SSD1306.obj" "TA3InputCapture.obj" "Tachometer.obj" "Timer32.obj" "TimerA1.obj" "blinker.obj" "board.obj" "cpu.obj" "device.obj" "driver.obj" "fixed.obj" "flowcont.obj" "fpu.obj" "fs.obj" "interrupt.obj" "main.obj" "netapp.obj" "netcfg.obj" "nonos.obj" "odometry.obj" "socket.obj" "spawn.obj" "spi.obj" "startup_msp432p401r_ccs.obj" "sysctl.obj" "system_msp432p401r.obj" "timer_tick.obj" "ustdlib.obj" "wlan.obj" 
 	-$(RM) "Bump.d" "Clock.d" "CortexM.d" "LaunchPad.d" "Motor.d" "PWM.d" "SSD1306.d" "TA3InputCapture.d" "Tachometer.d" "Timer32.d" "TimerA1.d" "blinker.d" "board.d" "cpu.d" "device.d" "driver.d" "fixed.d" "flowcont.d" "fpu.d" "fs.d" "interrupt.d" "main.d" "netapp.d" "netcfg.d" "nonos.d" "odometry.d" "socket.d" "spawn.d" "spi.d" "startup_msp432p401r_ccs.d" "sysctl.d" "system_msp432p401r.d" "timer_tick.d" "ustdlib.d" "wlan.d" 
 	-@echo 'Finished clean'

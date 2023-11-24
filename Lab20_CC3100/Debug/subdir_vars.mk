@@ -2,8 +2,6 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-SHELL = cmd.exe
-
 # Add inputs and outputs from these tool invocations to the build variables 
 CMD_SRCS += \
 ../msp432p401r.cmd 
@@ -12,41 +10,41 @@ OBJ_SRCS += \
 ../UART0.obj 
 
 C_SRCS += \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Bump.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Clock.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/CortexM.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/LaunchPad.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Motor.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/PWM.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/SSD1306.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TA3InputCapture.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Tachometer.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Timer32.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TimerA1.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/blinker.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/platform/msp432p/board.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/driverlib/cpu.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/device.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/driver.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/fixed.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/flowcont.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/driverlib/fpu.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/fs.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/driverlib/interrupt.c \
+/home/antonyzhao/eecs149-final-project/inc/Bump.c \
+/home/antonyzhao/eecs149-final-project/inc/Clock.c \
+/home/antonyzhao/eecs149-final-project/inc/CortexM.c \
+/home/antonyzhao/eecs149-final-project/inc/LaunchPad.c \
+/home/antonyzhao/eecs149-final-project/inc/Motor.c \
+/home/antonyzhao/eecs149-final-project/inc/PWM.c \
+/home/antonyzhao/eecs149-final-project/inc/SSD1306.c \
+/home/antonyzhao/eecs149-final-project/inc/TA3InputCapture.c \
+/home/antonyzhao/eecs149-final-project/inc/Tachometer.c \
+/home/antonyzhao/eecs149-final-project/inc/Timer32.c \
+/home/antonyzhao/eecs149-final-project/inc/TimerA1.c \
+/home/antonyzhao/eecs149-final-project/inc/blinker.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/platform/msp432p/board.c \
+/home/antonyzhao/eecs149-final-project/driverlib/cpu.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/device.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/driver.c \
+/home/antonyzhao/eecs149-final-project/inc/fixed.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/flowcont.c \
+/home/antonyzhao/eecs149-final-project/driverlib/fpu.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/fs.c \
+/home/antonyzhao/eecs149-final-project/driverlib/interrupt.c \
 ../main.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/netapp.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/netcfg.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/nonos.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/odometry.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/socket.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/spawn.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/platform/msp432p/spi.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/netapp.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/netcfg.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/nonos.c \
+/home/antonyzhao/eecs149-final-project/inc/odometry.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/socket.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/spawn.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/platform/msp432p/spi.c \
 ../startup_msp432p401r_ccs.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/driverlib/sysctl.c \
+/home/antonyzhao/eecs149-final-project/driverlib/sysctl.c \
 ../system_msp432p401r.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/platform/msp432p/timer_tick.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/utils/ustdlib.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/wlan.c 
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/platform/msp432p/timer_tick.c \
+/home/antonyzhao/eecs149-final-project/utils/ustdlib.c \
+/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/wlan.c 
 
 C_DEPS += \
 ./Bump.d \
@@ -197,40 +195,40 @@ C_DEPS__QUOTED += \
 "wlan.d" 
 
 C_SRCS__QUOTED += \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Bump.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Clock.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/CortexM.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/LaunchPad.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Motor.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/PWM.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/SSD1306.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TA3InputCapture.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Tachometer.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Timer32.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TimerA1.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/blinker.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/platform/msp432p/board.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/driverlib/cpu.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/device.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/driver.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/fixed.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/flowcont.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/driverlib/fpu.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/fs.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/driverlib/interrupt.c" \
+"/home/antonyzhao/eecs149-final-project/inc/Bump.c" \
+"/home/antonyzhao/eecs149-final-project/inc/Clock.c" \
+"/home/antonyzhao/eecs149-final-project/inc/CortexM.c" \
+"/home/antonyzhao/eecs149-final-project/inc/LaunchPad.c" \
+"/home/antonyzhao/eecs149-final-project/inc/Motor.c" \
+"/home/antonyzhao/eecs149-final-project/inc/PWM.c" \
+"/home/antonyzhao/eecs149-final-project/inc/SSD1306.c" \
+"/home/antonyzhao/eecs149-final-project/inc/TA3InputCapture.c" \
+"/home/antonyzhao/eecs149-final-project/inc/Tachometer.c" \
+"/home/antonyzhao/eecs149-final-project/inc/Timer32.c" \
+"/home/antonyzhao/eecs149-final-project/inc/TimerA1.c" \
+"/home/antonyzhao/eecs149-final-project/inc/blinker.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/platform/msp432p/board.c" \
+"/home/antonyzhao/eecs149-final-project/driverlib/cpu.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/device.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/driver.c" \
+"/home/antonyzhao/eecs149-final-project/inc/fixed.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/flowcont.c" \
+"/home/antonyzhao/eecs149-final-project/driverlib/fpu.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/fs.c" \
+"/home/antonyzhao/eecs149-final-project/driverlib/interrupt.c" \
 "../main.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/netapp.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/netcfg.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/nonos.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/odometry.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/socket.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/spawn.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/platform/msp432p/spi.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/netapp.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/netcfg.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/nonos.c" \
+"/home/antonyzhao/eecs149-final-project/inc/odometry.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/socket.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/spawn.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/platform/msp432p/spi.c" \
 "../startup_msp432p401r_ccs.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/driverlib/sysctl.c" \
+"/home/antonyzhao/eecs149-final-project/driverlib/sysctl.c" \
 "../system_msp432p401r.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/platform/msp432p/timer_tick.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/utils/ustdlib.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/cc3100-sdk/simplelink/source/wlan.c" 
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/platform/msp432p/timer_tick.c" \
+"/home/antonyzhao/eecs149-final-project/utils/ustdlib.c" \
+"/home/antonyzhao/eecs149-final-project/cc3100-sdk/simplelink/source/wlan.c" 
 
 

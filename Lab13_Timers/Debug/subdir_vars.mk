@@ -2,23 +2,21 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-SHELL = cmd.exe
-
 # Add inputs and outputs from these tool invocations to the build variables 
 CMD_SRCS += \
 ../msp432p401r.cmd 
 
 C_SRCS += \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Bump.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Clock.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/CortexM.c \
+/home/antonyzhao/eecs149-final-project/inc/Bump.c \
+/home/antonyzhao/eecs149-final-project/inc/Clock.c \
+/home/antonyzhao/eecs149-final-project/inc/CortexM.c \
 ../Lab13_Timersmain.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/LaunchPad.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Motor.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/PWM.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TExaS.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TimerA1.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/blinker.c \
+/home/antonyzhao/eecs149-final-project/inc/LaunchPad.c \
+/home/antonyzhao/eecs149-final-project/inc/Motor.c \
+/home/antonyzhao/eecs149-final-project/inc/PWM.c \
+/home/antonyzhao/eecs149-final-project/inc/TExaS.c \
+/home/antonyzhao/eecs149-final-project/inc/TimerA1.c \
+/home/antonyzhao/eecs149-final-project/inc/blinker.c \
 ../startup_msp432p401r_ccs.c \
 ../system_msp432p401r.c 
 
@@ -79,16 +77,16 @@ C_DEPS__QUOTED += \
 "system_msp432p401r.d" 
 
 C_SRCS__QUOTED += \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Bump.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Clock.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/CortexM.c" \
+"/home/antonyzhao/eecs149-final-project/inc/Bump.c" \
+"/home/antonyzhao/eecs149-final-project/inc/Clock.c" \
+"/home/antonyzhao/eecs149-final-project/inc/CortexM.c" \
 "../Lab13_Timersmain.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/LaunchPad.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Motor.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/PWM.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TExaS.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TimerA1.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/blinker.c" \
+"/home/antonyzhao/eecs149-final-project/inc/LaunchPad.c" \
+"/home/antonyzhao/eecs149-final-project/inc/Motor.c" \
+"/home/antonyzhao/eecs149-final-project/inc/PWM.c" \
+"/home/antonyzhao/eecs149-final-project/inc/TExaS.c" \
+"/home/antonyzhao/eecs149-final-project/inc/TimerA1.c" \
+"/home/antonyzhao/eecs149-final-project/inc/blinker.c" \
 "../startup_msp432p401r_ccs.c" \
 "../system_msp432p401r.c" 
 

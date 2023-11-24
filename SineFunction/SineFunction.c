@@ -41,7 +41,7 @@ policies, either expressed or implied, of the FreeBSD Project.
 #include <stdint.h>
 #include <stdio.h>
 #include "../inc/fixed.h"
-#include "../inc/clock.h"
+#include "../inc/Clock.h"
 #include "../inc/UART0.h"
 
 /* Calculate fixed-point sin
@@ -61,7 +61,7 @@ int32_t CubicSin(int32_t x){
   int32_t y; 
 // start with equation, convert to C
 // multiply by 10,000 and divide by 10,000 to remove floating point
-// y = (-6*x*x*x – 213*x*x + 179210*x – 21200)/10000;
+// y = (-6*x*x*x ï¿½ 213*x*x + 179210*x ï¿½ 21200)/10000;
 // factor to reduce number of multiplies
   y = (((-6*x-213)*x+179210)*x-21200)/10000;
   return y;

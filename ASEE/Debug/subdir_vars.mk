@@ -2,8 +2,6 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-SHELL = cmd.exe
-
 # Add inputs and outputs from these tool invocations to the build variables 
 CMD_SRCS += \
 ../msp432p401r.cmd 
@@ -29,17 +27,17 @@ OBJ_SRCS += \
 ../UART0.obj 
 
 C_SRCS += \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Clock.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/CortexM.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/GPIO.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/LPF.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/LaunchPad.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/SysTickInts.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TExaS.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/UART1.c \
+/home/antonyzhao/eecs149-final-project/inc/Clock.c \
+/home/antonyzhao/eecs149-final-project/inc/CortexM.c \
+/home/antonyzhao/eecs149-final-project/inc/GPIO.c \
+/home/antonyzhao/eecs149-final-project/inc/LPF.c \
+/home/antonyzhao/eecs149-final-project/inc/LaunchPad.c \
+/home/antonyzhao/eecs149-final-project/inc/SysTickInts.c \
+/home/antonyzhao/eecs149-final-project/inc/TExaS.c \
+/home/antonyzhao/eecs149-final-project/inc/UART1.c \
 ../blinker.c \
 ../main.c \
-E:/Dropbox/TIteachingProject/RSLK_1_1/inc/odometry.c \
+/home/antonyzhao/eecs149-final-project/inc/odometry.c \
 ../startup_msp432p401r_ccs.c \
 ../system_msp432p401r.c 
 
@@ -104,17 +102,17 @@ C_DEPS__QUOTED += \
 "system_msp432p401r.d" 
 
 C_SRCS__QUOTED += \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/Clock.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/CortexM.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/GPIO.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/LPF.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/LaunchPad.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/SysTickInts.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/TExaS.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/UART1.c" \
+"/home/antonyzhao/eecs149-final-project/inc/Clock.c" \
+"/home/antonyzhao/eecs149-final-project/inc/CortexM.c" \
+"/home/antonyzhao/eecs149-final-project/inc/GPIO.c" \
+"/home/antonyzhao/eecs149-final-project/inc/LPF.c" \
+"/home/antonyzhao/eecs149-final-project/inc/LaunchPad.c" \
+"/home/antonyzhao/eecs149-final-project/inc/SysTickInts.c" \
+"/home/antonyzhao/eecs149-final-project/inc/TExaS.c" \
+"/home/antonyzhao/eecs149-final-project/inc/UART1.c" \
 "../blinker.c" \
 "../main.c" \
-"E:/Dropbox/TIteachingProject/RSLK_1_1/inc/odometry.c" \
+"/home/antonyzhao/eecs149-final-project/inc/odometry.c" \
 "../startup_msp432p401r_ccs.c" \
 "../system_msp432p401r.c" 
 

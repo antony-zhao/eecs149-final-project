@@ -2,9 +2,7 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-SHELL = cmd.exe
-
-CG_TOOL_ROOT := E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS
+CG_TOOL_ROOT := /home/antonyzhao/ti/ccs1250/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
@@ -26,8 +24,8 @@ $(GEN_CMDS__FLAG) \
 
 -include ../makefile.init
 
-RM := DEL /F
-RMDIR := RMDIR /S/Q
+RM := rm -rf
+RMDIR := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
@@ -134,12 +132,6 @@ VerySimpleApplicationProcessor.out \
 EXE_OUTPUTS__QUOTED += \
 "VerySimpleApplicationProcessor.out" \
 
-BIN_OUTPUTS += \
-VerySimpleApplicationProcessor.hex \
-
-BIN_OUTPUTS__QUOTED += \
-"VerySimpleApplicationProcessor.hex" \
-
 
 # All Target
 all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
@@ -149,20 +141,13 @@ all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 VerySimpleApplicationProcessor.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: ARM Linker'
-	"E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --advice:power=all --define=__MSP432P401R__ --define=TARGET_IS_MSP432P4XX --define=ccs -g --c99 --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"VerySimpleApplicationProcessor.map" --heap_size=1024 --stack_size=512 -i"E:/ti/ccs900/ccs/ccs_base/arm/include" -i"E:/ti/ccs900/ccs/ccs_base/arm/include" -i"E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/lib" -i"E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="VerySimpleApplicationProcessor_linkInfo.xml" --rom_model -o "VerySimpleApplicationProcessor.out" $(ORDERED_OBJS)
+	"/home/antonyzhao/ti/ccs1250/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --advice:power=all --define=__MSP432P401R__ --define=TARGET_IS_MSP432P4XX --define=ccs -g --c99 --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"VerySimpleApplicationProcessor.map" --heap_size=1024 --stack_size=512 -i"/home/antonyzhao/ti/ccs1250/ccs/ccs_base/arm/include" -i"/home/antonyzhao/ti/ccs1250/ccs/ccs_base/arm/include" -i"/home/antonyzhao/ti/ccs1250/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/lib" -i"/home/antonyzhao/ti/ccs1250/ccs/tools/compiler/ti-cgt-arm_20.2.7.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="VerySimpleApplicationProcessor_linkInfo.xml" --rom_model -o "VerySimpleApplicationProcessor.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
-	@echo ' '
-
-VerySimpleApplicationProcessor.hex: $(EXE_OUTPUTS)
-	@echo 'Building files: $(strip $(EXE_OUTPUTS__QUOTED))'
-	@echo 'Invoking: ARM Hex Utility'
-	"E:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armhex" --memwidth=8 --romwidth=8 -o "VerySimpleApplicationProcessor.hex" $(EXE_OUTPUTS__QUOTED)
-	@echo 'Finished building: $(strip $(EXE_OUTPUTS__QUOTED))'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
+	-$(RM) $(EXE_OUTPUTS__QUOTED)
 	-$(RM) "AP.obj" "Clock.obj" "CortexM.obj" "GPIO.obj" "LaunchPad.obj" "UART1.obj" "VerySimpleApplicationProcessor.obj" "startup_msp432p401r_ccs.obj" "system_msp432p401r.obj" 
 	-$(RM) "AP.d" "Clock.d" "CortexM.d" "GPIO.d" "LaunchPad.d" "UART1.d" "VerySimpleApplicationProcessor.d" "startup_msp432p401r_ccs.d" "system_msp432p401r.d" 
 	-@echo 'Finished clean'
