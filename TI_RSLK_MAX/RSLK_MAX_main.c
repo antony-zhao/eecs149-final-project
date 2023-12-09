@@ -82,16 +82,16 @@ policies, either expressed or implied, of the FreeBSD Project.
 #include "msp.h"
 #include <stdint.h>
 #include <stdio.h>
-#include "..\inc\Bump.h"
-#include "..\inc\Blinker.h"
-#include "..\inc\Clock.h"
-#include "..\inc\CortexM.h"
-#include "..\inc\LaunchPad.h"
-#include "..\inc\Motor.h"
-#include "..\inc\Reflectance.h"
-#include "..\inc\SysTickInts.h"
-#include "..\inc\Tachometer.h"
-#include "..\inc\UART0.h"
+#include "../inc/Bump.h"
+#include "../inc/blinker.h"
+#include "../inc/Clock.h"
+#include "../inc/CortexM.h"
+#include "../inc/LaunchPad.h"
+#include "../inc/Motor.h"
+#include "../inc/Reflectance.h"
+#include "../inc/SysTickInts.h"
+#include "../inc/Tachometer.h"
+#include "../inc/UART0.h"
 
 
 uint16_t LeftSpeed;            //  rotations per minute

@@ -46,8 +46,8 @@ policies, either expressed or implied, of the FreeBSD Project.
 
 #include <stdint.h>
 #include "msp.h"
-#include "..\inc\Clock.h"
-#include "..\inc\TExaS.h"
+#include "../inc/Clock.h"
+#include "../inc/TExaS.h"
 
 void GPIO_Init(void){
   // initialize P4.3-P4.0 and make them outputs

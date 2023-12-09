@@ -49,11 +49,11 @@ policies, either expressed or implied, of the FreeBSD Project.
 // Right motor enable connected to P3.6 (J2.11)
 
 #include "msp.h"
-#include "..\inc\bump.h"
-#include "..\inc\Clock.h"
-#include "..\inc\SysTick.h"
-#include "..\inc\LaunchPad.h"
-#include "..\inc\MotorSimple.h"
+#include "../inc/Bump.h"
+#include "../inc/Clock.h"
+#include "../inc/SysTick.h"
+#include "../inc/LaunchPad.h"
+#include "../inc/MotorSimple.h"
 
 // Driver test
 void Pause(void){
@@ -62,7 +62,7 @@ void Pause(void){
 }
 
 
-int Program12_1(void){
+int main(void){ // Program12_1
   Clock_Init48MHz();
   LaunchPad_Init(); // built-in switches and LEDs
   Bump_Init();      // bump switches
@@ -80,7 +80,7 @@ int Program12_1(void){
 }
 
 // Voltage current and speed as a function of duty cycle
-int main(void){ //Program12_2(void){
+int Program12_2(void){ //Program12_2(void){
   uint16_t duty;
   Clock_Init48MHz();
   LaunchPad_Init();   // built-in switches and LEDs

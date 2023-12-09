@@ -52,6 +52,12 @@ policies, either expressed or implied, of the FreeBSD Project.
 // Right motor PWM connected to P2.6/TA0CCP3 (J4.39)
 // Right motor enable connected to P3.6 (J2.11)
 // *******Lab 12 solution*******
+#define LEFT_MOTOR_DIR P5->OUT
+#define LEFT_MOTOR_PWM P2->OUT
+#define LEFT_MOTOR_EN P3->OUT
+#define RIGHT_MOTOR_DIR P5->OUT
+#define RIGHT_MOTOR_PWM P2->OUT
+#define RIGHT_MOTOR_EN P3->OUT
 
 void Motor_InitSimple(void){
 // Initializes the 6 GPIO lines and puts driver to sleep
@@ -59,6 +65,17 @@ void Motor_InitSimple(void){
 // initialize P5.4 and P5.5 and make them outputs
 
   // write this as part of Lab 12
+    P5->DIR |= 0x30;     // P5.4, P5.5 output
+    P2->DIR |= 0xC0;     // P2.6, P2.7 output
+    P3->DIR |= 0xC0;     // P3.6, P3.7 output
+
+    // Start with motors stopped
+    LEFT_MOTOR_DIR &= ~0x10;  // Left motor direction
+    RIGHT_MOTOR_DIR &= ~0x20; // Right motor direction
+    LEFT_MOTOR_PWM &= ~0x80;  // Left motor PWM
+    RIGHT_MOTOR_PWM &= ~0x40; // Right motor PWM
+    LEFT_MOTOR_EN &= ~0x80;   // Left motor enable
+    RIGHT_MOTOR_EN &= ~0x40;  // Right motor enable
 
 }
 
@@ -76,6 +93,22 @@ void Motor_ForwardSimple(uint16_t duty, uint32_t time){
 // Returns after time*10ms or if a bumper switch is hit
 
   // write this as part of Lab 12
+    LEFT_MOTOR_DIR |= 0x10;   // Forward direction
+    RIGHT_MOTOR_DIR |= 0x20;
+
+    // Enable motors
+    LEFT_MOTOR_EN |= 0x80;
+    RIGHT_MOTOR_EN |= 0x40;
+
+    // Set PWM duty cycle
+    LEFT_MOTOR_PWM = duty;
+    RIGHT_MOTOR_PWM = duty;
+
+    // Wait for specified time
+    SysTick_Wait10ms(time);
+
+    // Stop motors
+    Motor_StopSimple();
 }
 void Motor_BackwardSimple(uint16_t duty, uint32_t time){
 // Drives both motors backward at duty (100 to 9900)
@@ -84,6 +117,23 @@ void Motor_BackwardSimple(uint16_t duty, uint32_t time){
 // Returns after time*10ms
 
   // write this as part of Lab 12
+
+    LEFT_MOTOR_DIR &= ~0x10;
+    RIGHT_MOTOR_DIR &= ~0x20;
+
+    // Enable motors
+    LEFT_MOTOR_EN |= 0x80;
+    RIGHT_MOTOR_EN |= 0x40;
+
+    // Set PWM duty cycle
+    LEFT_MOTOR_PWM = duty;
+    RIGHT_MOTOR_PWM = duty;
+
+    // Wait for specified time
+    SysTick_Wait10ms(time);
+
+    // Stop motors
+    Motor_StopSimple();
 }
 void Motor_LeftSimple(uint16_t duty, uint32_t time){
 // Drives just the left motor forward at duty (100 to 9900)
@@ -93,6 +143,21 @@ void Motor_LeftSimple(uint16_t duty, uint32_t time){
 // Returns after time*10ms or if a bumper switch is hit
 
   // write this as part of Lab 12
+    LEFT_MOTOR_DIR |= 0x10;
+    RIGHT_MOTOR_DIR &= ~0x20; // Right motor off
+
+    // Enable left motor
+    LEFT_MOTOR_EN |= 0x80;
+    RIGHT_MOTOR_EN &= ~0x40; // Right motor off
+
+    // Set PWM duty cycle for left motor
+    LEFT_MOTOR_PWM = duty;
+
+    // Wait for specified time
+    SysTick_Wait10ms(time);
+
+    // Stop motors
+    Motor_StopSimple();
 }
 void Motor_RightSimple(uint16_t duty, uint32_t time){
 // Drives just the right motor forward at duty (100 to 9900)
@@ -102,4 +167,19 @@ void Motor_RightSimple(uint16_t duty, uint32_t time){
 // Returns after time*10ms or if a bumper switch is hit
 
   // write this as part of Lab 12
+    LEFT_MOTOR_DIR &= ~0x10; // Left motor off
+    RIGHT_MOTOR_DIR |= 0x20;
+
+    // Enable right motor
+    LEFT_MOTOR_EN &= ~0x80; // Left motor off
+    RIGHT_MOTOR_EN |= 0x40;
+
+    // Set PWM duty cycle for right motor
+    RIGHT_MOTOR_PWM = duty;
+
+    // Wait for specified time
+    SysTick_Wait10ms(time);
+
+    // Stop motors
+    Motor_StopSimple();
 }
