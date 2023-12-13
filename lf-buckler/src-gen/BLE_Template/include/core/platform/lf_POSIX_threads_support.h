@@ -24,21 +24,24 @@ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************/
 
-/** POSIX API support for the C target of Lingua Franca.
- *  
- *  @author{Soroush Bateni <soroush@utdallas.edu>}
- * 
+/**
+ * POSIX API support for the C target of Lingua Franca.
+ *
+ * @author{Soroush Bateni <soroush@utdallas.edu>}
+ *
  * All functions return 0 on success.
  */
-#ifndef LF_POSIX_threads_SUPPORT_H
-#define LF_POSIX_threads_SUPPORT_H
+
+#ifndef LF_POSIX_THREADS_SUPPORT_H
+#define LF_POSIX_THREADS_SUPPORT_H
 
 #include <pthread.h>
 
-typedef pthread_mutex_t _lf_mutex_t;
-typedef pthread_cond_t _lf_cond_t;
-typedef pthread_t _lf_thread_t;
+typedef pthread_mutex_t lf_mutex_t;
+typedef struct {
+    lf_mutex_t* mutex;
+    pthread_cond_t condition;
+} lf_cond_t;
+typedef pthread_t lf_thread_t;
 
-#define _LF_TIMEOUT ETIMEDOUT
-
-#endif // LF_POSIX_threads_SUPPORT_H
+#endif

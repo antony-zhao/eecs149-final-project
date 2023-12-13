@@ -25,56 +25,52 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************/
 
 /** Windows API support for the C target of Lingua Franca.
- *  
+ *
  *  @author{Soroush Bateni <soroush@utdallas.edu>}
- * 
+ *  @author{Erling Jellum <erling.r.jellum@ntnu>}
+ *  
+ * The API is implemented in the header files. This is also the case for Linux
+ * and macos. 
+ *  
  * All functions return 0 on success.
- * 
+ *
  * @see https://gist.github.com/Soroosh129/127d1893fa4c1da6d3e1db33381bb273
  */
 
 #ifndef LF_WINDOWS_SUPPORT_H
 #define LF_WINDOWS_SUPPORT_H
 
-#include <windows.h>
-#include <process.h>
-#include <windef.h>
 #include <stdint.h> // For fixed-width integral types
+#include <windows.h>
 
-#ifndef __cplusplus
-typedef BOOL bool;
-#define true TRUE
-#define false FALSE
-#endif // __cplusplus
-
-#ifdef NUMBER_OF_WORKERS
-#if __STDC_VERSION__ < 201112L || defined (__STDC_NO_THREADS__) // (Not C++11 or later) or no threads support
-
-/**
- * On Windows, one could use botha  mutex or
- * a critical section for the same purpose. However,
- * critical sections are lighter and limited to one process
- * and thus fit the requirements of Lingua Franca.
- */
-typedef CRITICAL_SECTION _lf_mutex_t;
-/**
- * For compatibility with other platform APIs, we assume
- * that mutex is analogous to critical section.
- */
-typedef _lf_mutex_t _lf_critical_section_t;
-
-typedef CONDITION_VARIABLE _lf_cond_t;
-typedef HANDLE _lf_thread_t;
-
-#else
-#include "lf_C11_threads_support.h"
-#endif
+#if defined LF_THREADED
+    #if __STDC_VERSION__ < 201112L || defined (__STDC_NO_THREADS__)
+        /**
+         * On Windows, one could use both a mutex or
+         * a critical section for the same purpose. However,
+         * critical sections are lighter and limited to one process
+         * and thus fit the requirements of Lingua Franca.
+         */
+        typedef CRITICAL_SECTION lf_mutex_t;
+        /**
+         * For compatibility with other platform APIs, we assume
+         * that mutex is analogous to critical section.
+         */
+        typedef lf_mutex_t _lf_critical_section_t;
+        typedef struct {
+            _lf_critical_section_t* critical_section;
+            CONDITION_VARIABLE condition;
+        } lf_cond_t;
+        typedef HANDLE lf_thread_t;
+    #else
+        #include "lf_C11_threads_support.h"
+    #endif
 #endif
 
 // Use 64-bit times and 32-bit unsigned microsteps
 #include "lf_tag_64_32.h"
 
-#define _LF_TIMEOUT ETIMEDOUT
+// FIXME: Windows does not #define _LF_CLOCK
 
 #endif // LF_WINDOWS_SUPPORT_H
 

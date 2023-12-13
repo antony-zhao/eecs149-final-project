@@ -44,6 +44,16 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef MODAL_REACTORS
 
+#include <stddef.h>
+#include <stdbool.h>
+
+#include "lf_types.h"
+#include "tag.h"
+
+typedef struct event_t event_t;
+typedef struct reaction_t reaction_t;
+typedef struct trigger_t trigger_t;
+
 ////////////////////////////////////////////////////////////
 //// Macros for setting modes.
 
@@ -70,25 +80,6 @@ do { \
     ((self_base_t*)self)->_lf__mode_state.next_mode = mode; \
     ((self_base_t*)self)->_lf__mode_state.mode_change = change_type; \
 } while(0)
-
-
-////////////////////////////////////////////////////////////
-//// Forward declaration for generated code.
-
-/**
- * Function (to be code generated) to initialize modes.
- */
-void _lf_initialize_modes(void);
-
-/**
- * Function (to be code generated) to handle mode changes.
- */
-void _lf_handle_mode_changes(void);
-
-/**
- * Function (to be code generated) to handle mode triggered reactions.
- */
-void _lf_handle_mode_triggered_reactions(void);
 
 ////////////////////////////////////////////////////////////
 //// Type definitions for modal infrastructure.
@@ -127,15 +118,52 @@ struct mode_state_variable_reset_data_t {
     size_t size;                    // The size of the variable.
 };
 
-#else /* IF NOT MODAL_REACTORS */
+////////////////////////////////////////////////////////////
+//// Forward declaration 
+typedef struct environment_t environment_t;
 
+////////////////////////////////////////////////////////////
+//// Modes API
+void _lf_initialize_modes(environment_t* env);
+void _lf_handle_mode_changes(environment_t* env);
+void _lf_handle_mode_triggered_reactions(environment_t* env);
+bool _lf_mode_is_active(reactor_mode_t* mode);
+void _lf_initialize_mode_states(
+    environment_t* env,
+    reactor_mode_state_t* states[], 
+    int states_size);
+void _lf_process_mode_changes(
+    environment_t* env,
+    reactor_mode_state_t* states[],
+    int states_size,
+    mode_state_variable_reset_data_t reset_data[],
+    int reset_data_size,
+    trigger_t* timer_triggers[],
+    int timer_triggers_size
+);
+void _lf_add_suspended_event(event_t* event);
+void _lf_handle_mode_startup_reset_reactions(
+        environment_t* env,
+        reaction_t** startup_reactions,
+        int startup_reactions_size,
+        reaction_t** reset_reactions,
+        int reset_reactions_size,
+        reactor_mode_state_t* states[],
+        int states_size
+);
+void _lf_handle_mode_shutdown_reactions(
+        environment_t* env,
+        reaction_t** shutdown_reactions,
+        int shutdown_reactions_size
+);
+void _lf_terminate_modal_reactors(environment_t* env);
+
+#else /* IF NOT MODAL_REACTORS */
 /*
  * Reactions and triggers must have a mode pointer to set up connection to enclosing modes,
  * also when they are precompiled without modal reactors in order to later work in modal reactors.
  * Hence define mode type as void in the absence of modes to treat mode pointer as void pointers for that time being.
  */
 typedef void reactor_mode_t;
-
 #endif /* MODAL_REACTORS */
-
 #endif /* MODES_H */

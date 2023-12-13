@@ -28,7 +28,7 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * @section DESCRIPTION
  * Utility functions for managing output the user, error and warning
  * messages, logging, and debug messages. Outputs are filtered based on
- * whether a
+ * the target "logging" parameter.
  */
 
 #include "util.h"
@@ -39,6 +39,7 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>     // Defines memcpy()
 #include <stdarg.h>     // Defines va_list
 #include <time.h>       // Defines nanosleep()
+#include <stdbool.h>      
 
 #ifndef NUMBER_OF_FEDERATES
 #define NUMBER_OF_FEDERATES 1
@@ -86,7 +87,7 @@ void _lf_message_print(
 ) {  // Disable warnings about format check.
 	// The logging level may be set either by a LOG_LEVEL #define
 	// (which is code generated based on the logging target property)
-	// or by a register_print_function() call. Honor both. If neither
+	// or by a lf_register_print_function() call. Honor both. If neither
 	// has been set, then assume LOG_LEVEL_INFO. If both have been set,
 	// then honor the maximum.
 	int print_level = -1;
@@ -242,6 +243,21 @@ void lf_print_error_and_exit(const char* format, ...) {
     lf_vprint_error_and_exit(format, args);
     va_end (args);
     exit(EXIT_FAILURE);
+}
+
+/**
+ * Report an error with the prefix "ERROR: " and a newline appended
+ * at the end, then exit with the failure code EXIT_FAILURE.
+ * The arguments are just like printf().
+ */
+void lf_assert(bool condition, const char* format, ...) {
+	if (!condition) {
+    	va_list args;
+    	va_start (args, format);
+    	lf_vprint_error_and_exit(format, args);
+    	va_end (args);
+    	exit(EXIT_FAILURE);
+	}
 }
 
 /**

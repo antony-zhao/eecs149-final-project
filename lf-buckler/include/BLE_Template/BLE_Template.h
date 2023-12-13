@@ -1,8 +1,28 @@
 #ifndef _ble_template_main_H
 #define _ble_template_main_H
-#ifndef TOP_LEVEL_PREAMBLE_1714799774_H
-#define TOP_LEVEL_PREAMBLE_1714799774_H
-/*Correspondence: Range: [(8, 4), (37, 51)) -> Range: [(0, 0), (29, 51)) (verbatim=true; src=/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf)*/#include "simple_ble.h"
+#ifndef TOP_LEVEL_PREAMBLE_1178732207_H
+#define TOP_LEVEL_PREAMBLE_1178732207_H
+/*Correspondence: Range: [(13, 4), (32, 37)) -> Range: [(0, 0), (19, 37)) (verbatim=true; src=/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf)*/#include "nrfx_gpiote.h"
+#include "nrfx_spi.h"
+
+#include "buckler.h"    // Defines BUCKLER_LCD_SCLK, etc.
+#include "display.h"    // Defines Buckler display functions and constants.
+
+// Width of the display in characters.
+#define BUCKLER_DISPLAY_WIDTH 16
+
+// The SPI instance has to be global for the display to work across functions.
+// NOTE: display.h in Buckler library uses legacy nrf drivers rather than nrfx.
+// Hence, this type is a legacy type.
+nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
+
+// Buffer to use to write messages to the display.
+char buckler_message[2][BUCKLER_DISPLAY_WIDTH + 1];
+
+// Flag indicating that SPI has been initialized.
+// This is needed so that there can be multiple instances of this reactor.
+bool buckler_spi_initialized = false;
+/*Correspondence: Range: [(8, 4), (37, 67)) -> Range: [(0, 0), (29, 67)) (verbatim=true; src=/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf)*/#include "simple_ble.h"
 
 // Data structures needed for BLE.
 // See https://github.com/lab11/nrf52x-base/blob/master/lib/simple_ble/README.md
@@ -31,27 +51,7 @@ static simple_ble_service_t romi_service = {{
 // The characteristic is identified within the service by a 16-bit unique ID.
 static simple_ble_char_t key_state_characteristic = {.uuid16 = 0x7182};
 
-static bool keys[4] = {false, false, false, false};
-/*Correspondence: Range: [(13, 4), (32, 37)) -> Range: [(0, 0), (19, 37)) (verbatim=true; src=/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf)*/#include "nrfx_gpiote.h"
-#include "nrfx_spi.h"
-
-#include "buckler.h"    // Defines BUCKLER_LCD_SCLK, etc.
-#include "display.h"    // Defines Buckler display functions and constants.
-
-// Width of the display in characters.
-#define BUCKLER_DISPLAY_WIDTH 16
-
-// The SPI instance has to be global for the display to work across functions.
-// NOTE: display.h in Buckler library uses legacy nrf drivers rather than nrfx.
-// Hence, this type is a legacy type.
-nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
-
-// Buffer to use to write messages to the display.
-char buckler_message[2][BUCKLER_DISPLAY_WIDTH + 1];
-
-// Flag indicating that SPI has been initialized.
-// This is needed so that there can be multiple instances of this reactor.
-bool buckler_spi_initialized = false;
+static bool inputs[6] = {false, false, false, false, false, false};
 #endif
 #ifdef __cplusplus
 extern "C" {
@@ -82,7 +82,7 @@ typedef struct {
     lf_port_internal_t _base;
     bool value;
 
-} arrowkeys_up_t;
+} bluetoothreactor_s1_t;
 typedef struct {
     token_type_t type;
     lf_token_t* token;
@@ -91,7 +91,7 @@ typedef struct {
     lf_port_internal_t _base;
     bool value;
 
-} arrowkeys_down_t;
+} bluetoothreactor_s2_t;
 typedef struct {
     token_type_t type;
     lf_token_t* token;
@@ -100,7 +100,7 @@ typedef struct {
     lf_port_internal_t _base;
     bool value;
 
-} arrowkeys_left_t;
+} bluetoothreactor_s3_t;
 typedef struct {
     token_type_t type;
     lf_token_t* token;
@@ -109,5 +109,104 @@ typedef struct {
     lf_port_internal_t _base;
     bool value;
 
-} arrowkeys_right_t;
+} bluetoothreactor_s4_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    bool value;
+
+} bluetoothreactor_s5_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    bool value;
+
+} bluetoothreactor_s6_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    bool value;
+
+} robot_turn_left_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    bool value;
+
+} robot_turn_right_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    bool value;
+
+} robot_stop_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    bool value;
+
+} robot_obstacle_in_way_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    bool value;
+
+} robot_take_photo_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    bool value;
+
+} robot_drive_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    string value;
+
+} robot_notify_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    int value;
+
+} robot_power_left_t;
+typedef struct {
+    token_type_t type;
+    lf_token_t* token;
+    size_t length;
+    bool is_present;
+    lf_port_internal_t _base;
+    int value;
+
+} robot_power_right_t;
 #endif

@@ -24,20 +24,21 @@ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************/
 
-/** C11 threads support for the C target of Lingua Franca.
- *  
+/** \file if_c11_threads_support.c
+ * C11 threads support for the C target of Lingua Franca.
+ *
  *  @author{Soroush Bateni <soroush@utdallas.edu>}
  */
-
 #ifndef LF_C11_THREADS_SUPPORT_H
 #define LF_C11_THREADS_SUPPORT_H
 
 #include <threads.h>
 
-typedef mtx_t _lf_mutex_t;
-typedef cnd_t _lf_cond_t;
-typedef thrd_t _lf_thread_t;
+typedef mtx_t lf_mutex_t;
+typedef struct {
+    lf_mutex_t* mutex;
+    cnd_t condition;
+} lf_cond_t;
+typedef thrd_t lf_thread_t;
 
-#define _LF_TIMEOUT thrd_timedout
-
-#endif // LF_C11_THREADS_SUPPORT_H
+#endif

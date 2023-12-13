@@ -24,9 +24,9 @@ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************/
 
-/** 
+/**
  * Semaphore utility for reactor C.
- *  
+ *
  * @author{Soroush Bateni <soroush@utdallas.edu>}
  */
 
@@ -37,50 +37,50 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NUMBER_OF_WORKERS 1
 #endif // NUMBER_OF_WORKERS
 
-#include "../platform.h"
+#include "platform.h"
 #include <stdlib.h>
 
 typedef struct {
     int count;
     lf_mutex_t mutex;
     lf_cond_t cond;
-} semaphore_t;
+} lf_semaphore_t;
 
 /**
  * @brief Create a new semaphore.
- * 
+ *
  * @param count The count to start with.
- * @return semaphore_t* Can be NULL on error.
+ * @return lf_semaphore_t* Can be NULL on error.
  */
-semaphore_t* lf_semaphore_new(int count);
+lf_semaphore_t* lf_semaphore_new(int count);
 
 /**
  * @brief Release the 'semaphore' and add 'i' to its count.
- * 
+ *
  * @param semaphore Instance of a semaphore
  * @param i The count to add.
  */
-void lf_semaphore_release(semaphore_t* semaphore, int i);
+void lf_semaphore_release(lf_semaphore_t* semaphore, int i);
 
 /**
  * @brief Acquire the 'semaphore'. Will block if count is 0.
- * 
+ *
  * @param semaphore Instance of a semaphore.
  */
-void lf_semaphore_acquire(semaphore_t* semaphore);
+void lf_semaphore_acquire(lf_semaphore_t* semaphore);
 
 /**
  * @brief Wait on the 'semaphore' if count is 0.
- * 
+ *
  * @param semaphore Instance of a semaphore.
  */
-void lf_semaphore_wait(semaphore_t* semaphore);
+void lf_semaphore_wait(lf_semaphore_t* semaphore);
 
 /**
  * @brief Destroy the 'semaphore'.
- * 
+ *
  * @param semaphore Instance of a semaphore.
  */
-void lf_semaphore_destroy(semaphore_t* semaphore);
+void lf_semaphore_destroy(lf_semaphore_t* semaphore);
 
 #endif // LF_SEMAPHORE_H

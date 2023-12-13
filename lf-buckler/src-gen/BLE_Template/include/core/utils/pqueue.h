@@ -22,10 +22,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Modified by Marten Lohstroh (May, 2019).
- * Changes: 
+ * Changes:
  * - Require implementation of a pqueue_eq_elem_f function to determine
  *   whether two elements are equal or not; and
- * - The provided pqueue_eq_elem_f implementation is used to test and 
+ * - The provided pqueue_eq_elem_f implementation is used to test and
  *   search for equal elements present in the queue; and
  * - Removed capability to reassign priorities.
  */
@@ -40,6 +40,8 @@
 
 #ifndef PQUEUE_H
 #define PQUEUE_H
+
+#include <stddef.h>
 
 /** priority data type */
 typedef unsigned long long pqueue_pri_t;
@@ -138,9 +140,9 @@ void *pqueue_pop(pqueue_t *q);
 
 /**
  * @brief Empty 'src' into 'dest'.
- * 
+ *
  * As an optimization, this function might swap 'src' and 'dest'.
- * 
+ *
  * @param dest The queue to fill up
  * @param src  The queue to empty
  */
@@ -152,7 +154,7 @@ void pqueue_empty_into(pqueue_t** dest, pqueue_t** src);
  * @param q the queue
  * @param e the entry to compare against
  * @return NULL if no matching event has been found, otherwise the entry
- */ 
+ */
 void* pqueue_find_equal_same_priority(pqueue_t *q, void *e);
 
 /**
@@ -162,7 +164,7 @@ void* pqueue_find_equal_same_priority(pqueue_t *q, void *e);
  * @param e the entry to compare against
  * @param max_priority the maximum priority to consider
  * @return NULL if no matching event has been found, otherwise the entry
- */ 
+ */
 void* pqueue_find_equal(pqueue_t *q, void *e, pqueue_pri_t max_priority);
 
 /**
@@ -209,6 +211,20 @@ pqueue_dump(pqueue_t *q,
  * @param q the queue
  */
 int pqueue_is_valid(pqueue_t *q);
+
+// ********** Priority Queue Support Start
+int in_reverse_order(pqueue_pri_t thiz, pqueue_pri_t that);
+int in_no_particular_order(pqueue_pri_t thiz, pqueue_pri_t that);
+int event_matches(void* next, void* curr);
+int reaction_matches(void* next, void* curr);
+pqueue_pri_t get_event_time(void *a);
+pqueue_pri_t get_reaction_index(void *a);
+size_t get_event_position(void *a);
+size_t get_reaction_position(void *a);
+void set_event_position(void *a, size_t pos);
+void set_reaction_position(void *a, size_t pos);
+void print_reaction(void *reaction);
+void print_event(void *event);
 
 #endif /* PQUEUE_H */
 /** @} */

@@ -34,6 +34,7 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define UTIL_H
 
 #include <stdarg.h>   // Defines va_list
+#include <stdbool.h>
 
 // To silence warnings about a function being a candidate for format checking
 // with gcc, add an attribute.
@@ -59,10 +60,32 @@ typedef struct lf_stat_ll {
  * A handy macro that can concatenate three strings.
  * Useful in the LF_PRINT_DEBUG macro and lf_print_error
  * functions that want to concatenate a "DEBUG: " or
- * "ERROR: " to the beginning of the message and a 
+ * "ERROR: " to the beginning of the message and a
  * new line format \n at the end.
  */
 #define CONCATENATE_THREE_STRINGS(__string1, __string2, __string3) __string1 __string2 __string3
+
+/**
+ * Macro for extracting the level from the index of a reaction.
+ * A reaction that has no upstream reactions has level 0.
+ * Other reactions have a level that is the length of the longest
+ * upstream chain to a reaction with level 0 (inclusive).
+ * This is used, along with the deadline, to sort reactions
+ * in the reaction queue. It ensures that reactions that are
+ * upstream in the dependence graph execute before reactions
+ * that are downstream.
+ */
+#define LF_LEVEL(index) (index & 0xffffLL)
+
+/** Utility for finding the maximum of two values. */
+#ifndef LF_MAX
+#define LF_MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+#endif
+
+/** Utility for finding the minimum of two values. */
+#ifndef LF_MIN
+#define LF_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#endif
 
 /**
  * LOG_LEVEL is set in generated code to 0 through 4 if the target
@@ -223,6 +246,11 @@ void lf_vprint_warning(const char* format, va_list args) ATTRIBUTE_FORMAT_PRINTF
  * The arguments are just like printf().
  */
 void lf_print_error_and_exit(const char* format, ...) ATTRIBUTE_FORMAT_PRINTF(1, 2);
+
+/**
+ * A shorthand for checking if a condition is true and if not, print an error and exit.
+ */
+void lf_assert(bool condition, const char* format, ...) ATTRIBUTE_FORMAT_PRINTF(2, 3);
 
 /**
  * varargs alternative of "lf_print_error_and_exit"

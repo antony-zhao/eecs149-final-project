@@ -25,29 +25,29 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***************/
 
 /** MacOS API support for the C target of Lingua Franca.
- *  
+ *
  *  @author{Soroush Bateni <soroush@utdallas.edu>}
  */
 
 #ifndef LF_MACOS_SUPPORT_H
 #define LF_MACOS_SUPPORT_H
 
-#ifdef NUMBER_OF_WORKERS
-#if __STDC_VERSION__ < 201112L || defined (__STDC_NO_THREADS__) // (Not C++11 or later) or no threads support
-#include "lf_POSIX_threads_support.h"
-#else
-#include "lf_C11_threads_support.h"
-#endif
-#endif
-
 #include <stdint.h> // For fixed-width integral types
 #include <time.h>   // For CLOCK_MONOTONIC
-#include <stdbool.h>
 
 // Use 64-bit times and 32-bit unsigned microsteps
 #include "lf_tag_64_32.h"
 
 // The underlying physical clock for MacOS
 #define _LF_CLOCK CLOCK_MONOTONIC
+
+#if defined LF_THREADED
+    #if __STDC_VERSION__ < 201112L || defined (__STDC_NO_THREADS__)
+        // (Not C++11 or later) or no threads support
+        #include "lf_POSIX_threads_support.h"
+    #else
+        #include "lf_C11_threads_support.h"
+    #endif
+#endif
 
 #endif // LF_MACOS_SUPPORT_H

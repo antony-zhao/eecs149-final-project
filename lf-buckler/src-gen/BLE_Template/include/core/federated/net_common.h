@@ -189,14 +189,12 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Under decentralized coordination, the coordination is governed by STA and
  * STAAs, as further explained in https://doi.org/10.48550/arXiv.2109.07771.
  * 
- * FIXME: Expand this. Explain control reactions.
+ * FIXME: Expand this. Explain port absent reactions.
  *
  */
 
 #ifndef NET_COMMON_H
 #define NET_COMMON_H
-
-#include <pthread.h>
 
 /**
  * The timeout time in ns for TCP operations.
@@ -219,10 +217,10 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FED_COM_BUFFER_SIZE 256u
 
 /**
- * Number of seconds that elapse between a federate's attempts
+ * Number of nanoseconds that elapse between a federate's attempts
  * to connect to the RTI.
  */
-#define CONNECT_RETRY_INTERVAL 2
+#define CONNECT_RETRY_INTERVAL 2000000000LL
 
 /**
  * Bound on the number of retries to connect to the RTI.
@@ -329,6 +327,55 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *  passing to it its federate ID.
  */
 #define MSG_TYPE_FED_IDS 1
+
+/////////// Messages used for authenticated federation. ///////////////
+/**
+ * Byte identifying a message from a federate to an RTI containing
+ * federate's 8-byte random nonce for HMAC-based authentication. The federate sends this
+ * message to an incoming RTI when TCP connection is established
+ * between the RTI and the federate.
+ * The message contains, in this order:
+ * * One byte equal to MSG_TYPE_FED_NONCE.
+ * * Two bytes (ushort) giving the federate ID.
+ * * Eight bytes for federate's nonce.
+ */
+#define MSG_TYPE_FED_NONCE 100
+
+/**
+ * Byte identifying a message from RTI to federate as a response to the FED_NONCE
+ * message. The RTI sends this message to federate for HMAC-based authentication.
+ * The message contains, in this order:
+ * * One byte equal to MSG_TYPE_RTI_RESPONSE.
+ * * Eight bytes for RTI's nonce.
+ * * 32 bytes for HMAC tag based on SHA256. 
+ * The HMAC tag is composed of the following order:
+ * * One byte equal to MSG_TYPE_RTI_RESPONSE.
+ * * Two bytes (ushort) giving the received federate ID.
+ * * Eight bytes for received federate's nonce.
+ */
+#define MSG_TYPE_RTI_RESPONSE 101
+
+/**
+ * Byte identifying a message from federate to RTI as a response to the RTI_RESPONSE
+ * message. The federate sends this message to RTI for HMAC-based authentication.
+ * The message contains, in this order:
+ * * One byte equal to MSG_TYPE_FED_RESPONSE.
+ * * 32 bytes for HMAC tag based on SHA256.
+ * The HMAC tag is composed of the following order:
+ * * One byte equal to MSG_TYPE_FED_RESPONSE.
+ * * Eight bytes for received RTI's nonce.
+ */
+#define MSG_TYPE_FED_RESPONSE 102
+
+/**
+ * The randomly created nonce size will be 8 bytes.
+ */
+#define NONCE_LENGTH 8
+
+/**
+ * The HMAC tag uses the SHA256 hash algorithm, creating a 32 byte length hash tag.
+ */
+#define SHA256_HMAC_LENGTH 32
 
 /**
  * Byte identifying a timestamp message, which is 64 bits long.
@@ -660,5 +707,8 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /** Connected to the wrong server. */
 #define WRONG_SERVER 5
+
+/** HMAC authentication failed. */
+#define HMAC_DOES_NOT_MATCH 6
 
 #endif /* NET_COMMON_H */

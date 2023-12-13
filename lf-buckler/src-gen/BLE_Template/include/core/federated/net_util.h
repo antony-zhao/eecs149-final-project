@@ -38,19 +38,29 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef NET_UTIL_H
 #define NET_UTIL_H
 
+#ifdef PLATFORM_ARDUINO
+#error To be implemented. No support for federation on Arduino yet.
+#else
 #include <sys/socket.h>
-#include <sys/types.h>
-#include "../platform.h"  // defines lf_mutex_t
-#include "../tag.h"       // Defines tag_t
 #include <regex.h>
+#endif
+
+#include <sys/types.h>
+#include <stdbool.h>
+
+#include "../platform.h"
+#include "../tag.h"
 
 #define HOST_LITTLE_ENDIAN 1
 #define HOST_BIG_ENDIAN 2
 
-/** Return true (1) if the host is big endian. Otherwise,
- *  return false.
+/** 
+ * Return true (1) if the host is big endian. Otherwise,
+ * return false.
  */
 int host_is_big_endian(void);
+
+#ifdef FEDERATED
 
 /**
  * Read the specified number of bytes from the specified socket into the
@@ -73,6 +83,8 @@ ssize_t read_from_socket_errexit(
 		size_t num_bytes,
 		unsigned char* buffer,
 		char* format, ...);
+
+ssize_t write_to_socket(int socket, size_t num_bytes, unsigned char* buffer);
 
 /**
  * Read the specified number of bytes from the specified socket into the
@@ -104,7 +116,7 @@ ssize_t read_from_socket(int socket, size_t num_bytes, unsigned char* buffer);
  * @return The number of bytes written, or 0 if an EOF was received, or a negative
  *  number if an error occurred.
  */
-ssize_t write_to_socket_errexit_with_mutex(
+ssize_t write_to_socket_with_mutex(
 		int socket,
 		size_t num_bytes,
 		unsigned char* buffer,
@@ -148,91 +160,103 @@ ssize_t write_to_socket_errexit(
  */
 int write_to_socket2(int socket, int num_bytes, unsigned char* buffer);
 
-/** Write the specified data as a sequence of bytes starting
- *  at the specified address. This encodes the data in little-endian
- *  order (lowest order byte first).
- *  @param data The data to write.
- *  @param buffer The location to start writing.
+#endif // FEDERATED
+
+/**
+ * Write the specified data as a sequence of bytes starting
+ * at the specified address. This encodes the data in little-endian
+ * order (lowest order byte first).
+ * @param data The data to write.
+ * @param buffer The location to start writing.
  */
 void encode_int64(int64_t data, unsigned char* buffer);
 
-/** Write the specified data as a sequence of bytes starting
- *  at the specified address. This encodes the data in little-endian
- *  order (lowest order byte first). This works for int32_t.
- *  @param data The data to write.
- *  @param buffer The location to start writing.
+/** 
+ * Write the specified data as a sequence of bytes starting
+ * at the specified address. This encodes the data in little-endian
+ * order (lowest order byte first). This works for int32_t.
+ * @param data The data to write.
+ * @param buffer The location to start writing.
  */
 void encode_int32(int32_t data, unsigned char* buffer);
 
-/** Write the specified data as a sequence of bytes starting
- *  at the specified address. This encodes the data in little-endian
- *  order (lowest order byte first). This works for uint32_t.
- *  @param data The data to write.
- *  @param buffer The location to start writing.
+/**
+ * Write the specified data as a sequence of bytes starting
+ * at the specified address. This encodes the data in little-endian
+ * order (lowest order byte first). This works for uint32_t.
+ * @param data The data to write.
+ * @param buffer The location to start writing.
  */
 void encode_uint32(uint32_t data, unsigned char* buffer);
 
-/** Write the specified data as a sequence of bytes starting
- *  at the specified address. This encodes the data in little-endian
- *  order (lowest order byte first).
- *  @param data The data to write.
- *  @param buffer The location to start writing.
+/** 
+ * Write the specified data as a sequence of bytes starting
+ * at the specified address. This encodes the data in little-endian
+ * order (lowest order byte first).
+ * @param data The data to write.
+ * @param buffer The location to start writing.
  */
 void encode_uint16(uint16_t data, unsigned char* buffer);
 
-/** If this host is little endian, then reverse the order of
- *  the bytes of the argument. Otherwise, return the argument
- *  unchanged. This can be used to convert the argument to
- *  network order (big endian) and then back again.
- *  Network transmissions, by convention, are big endian,
- *  meaning that the high-order byte is sent first.
- *  But many platforms, including my Mac, are little endian,
- *  meaning that the low-order byte is first in memory.
- *  @param src The argument to convert.
+/** 
+ * If this host is little endian, then reverse the order of
+ * the bytes of the argument. Otherwise, return the argument
+ * unchanged. This can be used to convert the argument to
+ * network order (big endian) and then back again.
+ * Network transmissions, by convention, are big endian,
+ * meaning that the high-order byte is sent first.
+ * But many platforms, including my Mac, are little endian,
+ * meaning that the low-order byte is first in memory.
+ * @param src The argument to convert.
  */
 int32_t swap_bytes_if_big_endian_int32(int32_t src);
 
-/** If this host is little endian, then reverse the order of
- *  the bytes of the argument. Otherwise, return the argument
- *  unchanged. This can be used to convert the argument to
- *  network order (big endian) and then back again.
- *  Network transmissions, by convention, are big endian,
- *  meaning that the high-order byte is sent first.
- *  But many platforms, including my Mac, are little endian,
- *  meaning that the low-order byte is first in memory.
- *  @param src The argument to convert.
+/** 
+ * If this host is little endian, then reverse the order of
+ * the bytes of the argument. Otherwise, return the argument
+ * unchanged. This can be used to convert the argument to
+ * network order (big endian) and then back again.
+ * Network transmissions, by convention, are big endian,
+ * meaning that the high-order byte is sent first.
+ * But many platforms, including my Mac, are little endian,
+ * meaning that the low-order byte is first in memory.
+ * @param src The argument to convert.
  */
 int64_t swap_bytes_if_big_endian_int64(int64_t src);
 
-/** If this host is little endian, then reverse the order of
- *  the bytes of the argument. Otherwise, return the argument
- *  unchanged. This can be used to convert the argument to
- *  network order (big endian) and then back again.
- *  Network transmissions, by convention, are big endian,
- *  meaning that the high-order byte is sent first.
- *  But many platforms, including my Mac, are little endian,
- *  meaning that the low-order byte is first in memory.
- *  @param src The argument to convert.
+/** 
+ * If this host is little endian, then reverse the order of
+ * the bytes of the argument. Otherwise, return the argument
+ * unchanged. This can be used to convert the argument to
+ * network order (big endian) and then back again.
+ * Network transmissions, by convention, are big endian,
+ * meaning that the high-order byte is sent first.
+ * But many platforms, including my Mac, are little endian,
+ * meaning that the low-order byte is first in memory.
+ * @param src The argument to convert.
  */
 uint16_t swap_bytes_if_big_endian_uint16(uint16_t src);
 
-/** Extract an int32_t from the specified byte sequence.
- *  This will swap the order of the bytes if this machine is big endian.
- *  @param bytes The address of the start of the sequence of bytes.
+/**
+ * This will swap the order of the bytes if this machine is big endian.
+ * @param bytes The address of the start of the sequence of bytes.
  */
 int32_t extract_int32(unsigned char* bytes);
 
-/** Extract a int64_t from the specified byte sequence.
- *  This will swap the order of the bytes if this machine is big endian.
- *  @param bytes The address of the start of the sequence of bytes.
+/**
+ * This will swap the order of the bytes if this machine is big endian.
+ * @param bytes The address of the start of the sequence of bytes.
  */
 int64_t extract_int64(unsigned char* bytes);
 
-/** Extract an uint16_t from the specified byte sequence.
- *  This will swap the order of the bytes if this machine is big endian.
- *  @param bytes The address of the start of the sequence of bytes.
+/** 
+ * Extract an uint16_t from the specified byte sequence.
+ * This will swap the order of the bytes if this machine is big endian.
+ * @param bytes The address of the start of the sequence of bytes.
  */
 uint16_t extract_uint16(unsigned char* bytes);
+
+#ifdef FEDERATED
 
 /**
  * Extract the core header information that all messages between
@@ -276,7 +300,7 @@ void extract_timed_header(
  *
  * The tag is transmitted as a 64-bit (8 byte) signed integer for time and a
  * 32-bit (4 byte) unsigned integer for microstep.
- * 
+ *
  * @param buffer The buffer to read from.
  * @return The extracted tag.
  */
@@ -286,9 +310,9 @@ tag_t extract_tag(
 
 /**
  * Encode tag information into buffer.
- * 
+ *
  * Buffer must have been allocated externally.
- * 
+ *
  * @param buffer The buffer to encode into.
  * @param tag The tag to encode into 'buffer'.
  */
@@ -298,7 +322,7 @@ void encode_tag(
 );
 
 /**
- * A helper struct for passing rti_addr information betweem parse_rti_addr and extract_rti_addr_info
+ * A helper struct for passing rti_addr information between parse_rti_addr and extract_rti_addr_info
  */
 typedef struct rti_addr_info_t {
     char rti_host_str[256];
@@ -310,32 +334,28 @@ typedef struct rti_addr_info_t {
 } rti_addr_info_t;
 
 /**
- * Checks if str matches regex.
+ * Check whether str matches regex.
  * @return true if there is a match, false otherwise.
  */
-bool match_regex(char* str, char* regex);
-
+bool match_regex(const char* str, char* regex);
 
 /**
- * Checks if port is valid.
+ * Check whether port is valid.
  * @return true if valid, false otherwise.
  */
 bool validate_port(char* port);
 
-
 /**
- * Checks if host is valid.
+ * Check whether host is valid.
  * @return true if valid, false otherwise.
  */
-bool validate_host(char* host);
-
+bool validate_host(const char* host);
 
 /**
- * Checks if user is valid.
+ * Check whether user is valid.
  * @return true if valid, false otherwise.
  */
-bool validate_user(char* user);
-
+bool validate_user(const char* user);
 
 /**
  * Extract one match group from the rti_addr regex .
@@ -344,19 +364,17 @@ bool validate_user(char* user);
 bool extract_match_group(const char* rti_addr, char* dest, regmatch_t group,
 		int max_len, int min_len, const char* err_msg);
 
-
 /**
  * Extract match groups from the rti_addr regex.
  * @return true if success, else false.
  */
-bool extract_match_groups(const char* rti_addr, char** rti_addr_strs, bool** rti_addr_flags, regmatch_t* group_array,
-                          int* gids, int* max_lens, int* min_lens, const char** err_msgs);
-
+bool extract_match_groups(const char* rti_addr, char** rti_addr_strs, bool** rti_addr_flags, regmatch_t* group_array, int* gids, int* max_lens, int* min_lens, const char** err_msgs);
 
 /**
- * Extract the host, port and user from rti_addr.  
+ * Extract the host, port and user from rti_addr.
  */
 void extract_rti_addr_info(const char* rti_addr, rti_addr_info_t* rti_addr_info);
 
+#endif // FEDERATED
 
 #endif /* NET_UTIL_H */

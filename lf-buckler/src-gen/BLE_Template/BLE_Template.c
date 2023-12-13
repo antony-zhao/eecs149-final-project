@@ -2,616 +2,192 @@
 // file://home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf
 #define LOG_LEVEL 2
 #define TARGET_FILES_DIRECTORY "/home/lfvmu/eecs149-final-project/lf-buckler/src-gen/BLE_Template"
-#include "include/ctarget/ctarget.h"
-#include "core/reactor.c"
-#include "core/mixed_radix.h"
-#include "core/port.h"
-#include "simple_ble.h"
 
-// Data structures needed for BLE.
-// See https://github.com/lab11/nrf52x-base/blob/master/lib/simple_ble/README.md
-
-// BLE Configuration specifies the MAC address and
-// intervals for advertising and connections.
-static simple_ble_config_t ble_config = {
-        // MAC address: c0:98:e5:49:xx:xx
-        // where the last two octets are given by the device_id below.
-        .platform_id       = 0x49,   // The 4th octet in device BLE address.
-        .device_id         = 0xAABB, // TODO: replace with your lab bench number
-        .adv_name          = "ROMI", // used in advertisements if there is room
-        .adv_interval      = MSEC_TO_UNITS(100, UNIT_0_625_MS),
-        .min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
-        .max_conn_interval = MSEC_TO_UNITS(200, UNIT_1_25_MS),
-};
-
-// Specify a unique ID for the ROMI service.
-// UUID: 85e43f4d-b4a7-4c6f-ba86-2db3c40a2c83
-static simple_ble_service_t romi_service = {{
-    .uuid128 = {0x83,0x2c,0x0a,0xc4,0xb3,0x2d,0x86,0xba,
-                0x6f,0x4c,0xa7,0xb4,0x4d,0x3f,0xe4,0x85}
-}};
-
-// Characteristic reflecting key presses.
-// The characteristic is identified within the service by a 16-bit unique ID.
-static simple_ble_char_t key_state_characteristic = {.uuid16 = 0x7182};
-
-static bool keys[4] = {false, false, false, false};
+#include <limits.h>
+#include "include/core/platform.h"
+#include "include/api/api.h"
+#include "include/core/reactor.h"
+#include "include/core/reactor_common.h"
+#include "include/core/mixed_radix.h"
+#include "include/core/port.h"
+#include "include/core/environment.h"
+int lf_reactor_c_main(int argc, const char* argv[]);
 int main(int argc, const char* argv[]) {
     return lf_reactor_c_main(argc, argv);
 }
 void _lf_set_default_command_line_options() {}
-// =============== START reactor class Display
-// *********** From the preamble, verbatim:
-#line 14 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-#include "nrfx_gpiote.h"
-#include "nrfx_spi.h"
-
-#include "buckler.h"    // Defines BUCKLER_LCD_SCLK, etc.
-#include "display.h"    // Defines Buckler display functions and constants.
-
-// Width of the display in characters.
-#define BUCKLER_DISPLAY_WIDTH 16
-
-// The SPI instance has to be global for the display to work across functions.
-// NOTE: display.h in Buckler library uses legacy nrf drivers rather than nrfx.
-// Hence, this type is a legacy type.
-nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
-
-// Buffer to use to write messages to the display.
-char buckler_message[2][BUCKLER_DISPLAY_WIDTH + 1];
-
-// Flag indicating that SPI has been initialized.
-// This is needed so that there can be multiple instances of this reactor.
-bool buckler_spi_initialized = false;
-
-// *********** End of preamble.
-typedef struct {
-    bool is_present;
-    lf_sparse_io_record_t* sparse_record;
-    int destination_channel;
-    string value;
-    int num_destinations;
-    lf_token_t* token;
-    int length;
-    void (*destructor) (void* value);
-    void* (*copy_constructor) (void* value);
-} display_message_t;
-typedef struct {
-    struct self_base_t base;
-    #line 40 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    int row;
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    display_message_t* _lf_message;
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    // width of -2 indicates that it is not a multiport.
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    int _lf_message_width;
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    // Default input (in case it does not get connected)
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    display_message_t _lf_default__message;
-    #line 42 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    reaction_t _lf__reaction_0;
-    #line 70 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    reaction_t _lf__reaction_1;
-    trigger_t _lf__startup;
-    reaction_t* _lf__startup_reactions[1];
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    trigger_t _lf__message;
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    reaction_t* _lf__message_reactions[1];
-} display_self_t;
-// ***** Start of method declarations.
-// ***** End of method declarations.
-#include "include/ctarget/set.h"
-void displayreaction_function_0(void* instance_args) {
-    display_self_t* self = (display_self_t*)instance_args; SUPPRESS_UNUSED_WARNING(self);
-    #line 43 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    ret_code_t error_code = NRF_SUCCESS;
-    
-    if (!buckler_spi_initialized) {
-        buckler_spi_initialized = true;
-        // initialize spi master
-        nrf_drv_spi_config_t spi_config = {
-            .sck_pin = BUCKLER_LCD_SCLK,
-            .mosi_pin = BUCKLER_LCD_MOSI,
-            .miso_pin = BUCKLER_LCD_MISO,
-            .ss_pin = BUCKLER_LCD_CS,
-            .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
-            .orc = 0,
-            .frequency = NRF_DRV_SPI_FREQ_4M,
-            .mode = NRF_DRV_SPI_MODE_2,
-            .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
-        };
-        error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
-        APP_ERROR_CHECK(error_code);
-    
-        // initialize display driver
-        error_code = display_init(&spi_instance);
-        APP_ERROR_CHECK(error_code);
-    
-        error_code = display_write("Initialized", 0);
-        APP_ERROR_CHECK(error_code);
-    }
+#include "_display.h"
+#include "_bluetoothreactor.h"
+#include "_robot.h"
+#include "_ble_template_main.h"
+typedef enum {
+    ble_template_main,
+    _num_enclaves
+} _enclave_id;
+// The global array of environments associated with each enclave
+environment_t envs[_num_enclaves];
+// 'Create' and initialize the environments in the program
+void _lf_create_environments() {
+    environment_init(&envs[ble_template_main],ble_template_main,_lf_number_of_workers,1,3,0,0,7,1,0,NULL);
 }
-#include "include/ctarget/set_undef.h"
-#include "include/ctarget/set.h"
-void displayreaction_function_1(void* instance_args) {
-    display_self_t* self = (display_self_t*)instance_args; SUPPRESS_UNUSED_WARNING(self);
-    display_message_t* message = self->_lf_message;
-    int message_width = self->_lf_message_width; SUPPRESS_UNUSED_WARNING(message_width);
-    #line 71 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    // Copy the message to the global buffer, truncating it at the display width.
-    snprintf(buckler_message[self->row], BUCKLER_DISPLAY_WIDTH + 1, "%s", message->value);
-    
-    ret_code_t error_code = display_write(buckler_message[self->row], self->row);
-    APP_ERROR_CHECK(error_code);
+// Update the pointer argument to point to the beginning of the environment array
+// and return the size of that array
+int _lf_get_environments(environment_t ** return_envs) {
+   (*return_envs) = (environment_t *) envs;
+   return _num_enclaves;
 }
-#include "include/ctarget/set_undef.h"
-display_self_t* new_Display() {
-    display_self_t* self = (display_self_t*)_lf_new_reactor(sizeof(display_self_t));
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    // Set input by default to an always absent default input.
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf_message = &self->_lf_default__message;
-    #line 42 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_0.number = 0;
-    #line 42 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_0.function = displayreaction_function_0;
-    #line 42 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_0.self = self;
-    #line 42 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_0.deadline_violation_handler = NULL;
-    #line 42 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_0.STP_handler = NULL;
-    #line 42 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_0.name = "?";
-    #line 42 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_0.mode = NULL;
-    #line 70 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_1.number = 1;
-    #line 70 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_1.function = displayreaction_function_1;
-    #line 70 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_1.self = self;
-    #line 70 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_1.deadline_violation_handler = NULL;
-    #line 70 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_1.STP_handler = NULL;
-    #line 70 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_1.name = "?";
-    #line 70 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__reaction_1.mode = NULL;
-    self->_lf__startup_reactions[0] = &self->_lf__reaction_0;
-    self->_lf__startup.last = NULL;
-    self->_lf__startup.reactions = &self->_lf__startup_reactions[0];
-    self->_lf__startup.number_of_reactions = 1;
-    self->_lf__startup.is_timer = false;
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__message.last = NULL;
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__message_reactions[0] = &self->_lf__reaction_1;
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__message.reactions = &self->_lf__message_reactions[0];
-    #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-    self->_lf__message.number_of_reactions = 1;
-    self->_lf__message.element_size = sizeof(string);
-    return self;
-}
-// =============== END reactor class Display
-// =============== START reactor class ArrowKeys
-typedef struct {
-    bool is_present;
-    lf_sparse_io_record_t* sparse_record;
-    int destination_channel;
-    bool value;
-    int num_destinations;
-    lf_token_t* token;
-    int length;
-    void (*destructor) (void* value);
-    void* (*copy_constructor) (void* value);
-} arrowkeys_up_t;
-typedef struct {
-    bool is_present;
-    lf_sparse_io_record_t* sparse_record;
-    int destination_channel;
-    bool value;
-    int num_destinations;
-    lf_token_t* token;
-    int length;
-    void (*destructor) (void* value);
-    void* (*copy_constructor) (void* value);
-} arrowkeys_down_t;
-typedef struct {
-    bool is_present;
-    lf_sparse_io_record_t* sparse_record;
-    int destination_channel;
-    bool value;
-    int num_destinations;
-    lf_token_t* token;
-    int length;
-    void (*destructor) (void* value);
-    void* (*copy_constructor) (void* value);
-} arrowkeys_left_t;
-typedef struct {
-    bool is_present;
-    lf_sparse_io_record_t* sparse_record;
-    int destination_channel;
-    bool value;
-    int num_destinations;
-    lf_token_t* token;
-    int length;
-    void (*destructor) (void* value);
-    void* (*copy_constructor) (void* value);
-} arrowkeys_right_t;
-typedef struct {
-    struct self_base_t base;
-    #line 50 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    interval_t period;
-    #line 52 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    arrowkeys_up_t _lf_up;
-    #line 52 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    int _lf_up_width;
-    #line 53 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    arrowkeys_down_t _lf_down;
-    #line 53 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    int _lf_down_width;
-    #line 54 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    arrowkeys_left_t _lf_left;
-    #line 54 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    int _lf_left_width;
-    #line 55 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    arrowkeys_right_t _lf_right;
-    #line 55 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    int _lf_right_width;
-    #line 59 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    reaction_t _lf__reaction_0;
-    #line 72 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    reaction_t _lf__reaction_1;
-    #line 57 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    trigger_t _lf__t;
-    #line 57 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    reaction_t* _lf__t_reactions[1];
-    trigger_t _lf__startup;
-    reaction_t* _lf__startup_reactions[1];
-} arrowkeys_self_t;
-// ***** Start of method declarations.
-// ***** End of method declarations.
-#include "include/ctarget/set.h"
-void arrowkeysreaction_function_0(void* instance_args) {
-    arrowkeys_self_t* self = (arrowkeys_self_t*)instance_args; SUPPRESS_UNUSED_WARNING(self);
-    #line 60 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    // Set up BLE.
-    // See https://github.com/lab11/nrf52x-base/blob/master/lib/simple_ble/README.md
-    simple_ble_app_t * simple_ble_app = simple_ble_init(&ble_config);
-    
-    simple_ble_add_service(&romi_service);
-    
-    simple_ble_add_characteristic(1, 1, 0, 0, sizeof(keys), (uint8_t*)&keys, &romi_service, &key_state_characteristic);
-    
-    simple_ble_adv_only_name();
-    // Your code goes here.
-}
-#include "include/ctarget/set_undef.h"
-#include "include/ctarget/set.h"
-void arrowkeysreaction_function_1(void* instance_args) {
-    arrowkeys_self_t* self = (arrowkeys_self_t*)instance_args; SUPPRESS_UNUSED_WARNING(self);
-    arrowkeys_up_t* up = &self->_lf_up;
-    arrowkeys_down_t* down = &self->_lf_down;
-    arrowkeys_left_t* left = &self->_lf_left;
-    arrowkeys_right_t* right = &self->_lf_right;
-    #line 73 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    // Output a boolean for each arrow key, where true
-    // indicates that the key is currently pressed and false
-    // indicates that it is not.
-    
-    // Your code goes here.
-    lf_set(up, keys[0]);
-    lf_set(down, keys[1]);
-    lf_set(left, keys[2]);
-    lf_set(right, keys[3]);
-}
-#include "include/ctarget/set_undef.h"
-arrowkeys_self_t* new_ArrowKeys() {
-    arrowkeys_self_t* self = (arrowkeys_self_t*)_lf_new_reactor(sizeof(arrowkeys_self_t));
-    #line 59 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.number = 0;
-    #line 59 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.function = arrowkeysreaction_function_0;
-    #line 59 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.self = self;
-    #line 59 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.deadline_violation_handler = NULL;
-    #line 59 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.STP_handler = NULL;
-    #line 59 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.name = "?";
-    #line 59 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.mode = NULL;
-    #line 72 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_1.number = 1;
-    #line 72 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_1.function = arrowkeysreaction_function_1;
-    #line 72 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_1.self = self;
-    #line 72 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_1.deadline_violation_handler = NULL;
-    #line 72 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_1.STP_handler = NULL;
-    #line 72 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_1.name = "?";
-    #line 72 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_1.mode = NULL;
-    #line 57 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__t.last = NULL;
-    #line 57 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    #line 57 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__t_reactions[0] = &self->_lf__reaction_1;
-    #line 57 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__t.reactions = &self->_lf__t_reactions[0];
-    #line 57 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__t.number_of_reactions = 1;
-    self->_lf__t.is_timer = true;
-    self->_lf__startup_reactions[0] = &self->_lf__reaction_0;
-    self->_lf__startup.last = NULL;
-    self->_lf__startup.reactions = &self->_lf__startup_reactions[0];
-    self->_lf__startup.number_of_reactions = 1;
-    self->_lf__startup.is_timer = false;
-    return self;
-}
-// =============== END reactor class ArrowKeys
-// =============== START reactor class BLE_Template
-typedef struct {
-    struct self_base_t base;
-    struct {
-        #line 41 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/lib/Display.lf"
-        display_message_t message;
-    } _lf_display;
-    int _lf_display_width;
-    struct {
-        #line 52 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        arrowkeys_up_t* up;
-        #line 52 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        trigger_t up_trigger;
-        #line 52 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        reaction_t* up_reactions[1];
-        #line 53 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        arrowkeys_down_t* down;
-        #line 53 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        trigger_t down_trigger;
-        #line 53 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        reaction_t* down_reactions[1];
-        #line 54 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        arrowkeys_left_t* left;
-        #line 54 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        trigger_t left_trigger;
-        #line 54 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        reaction_t* left_reactions[1];
-        #line 55 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        arrowkeys_right_t* right;
-        #line 55 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        trigger_t right_trigger;
-        #line 55 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-        reaction_t* right_reactions[1];
-    } _lf_keys;
-    int _lf_keys_width;
-    #line 96 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    reaction_t _lf__reaction_0;
-} ble_template_self_t;
-// ***** Start of method declarations.
-// ***** End of method declarations.
-#include "include/ctarget/set.h"
-void ble_templatereaction_function_0(void* instance_args) {
-    ble_template_self_t* self = (ble_template_self_t*)instance_args; SUPPRESS_UNUSED_WARNING(self);
-    struct keys {
-        arrowkeys_up_t* up;
-    arrowkeys_down_t* down;
-    arrowkeys_left_t* left;
-    arrowkeys_right_t* right;
-    
-    } keys;
-    struct display {
-        display_message_t* message;
-    
-    } display;
-    keys.up = self->_lf_keys.up;
-    keys.down = self->_lf_keys.down;
-    keys.left = self->_lf_keys.left;
-    keys.right = self->_lf_keys.right;
-    display.message = &(self->_lf_display.message);
-    #line 97 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    static char message[5] = "____\0";
-    if (keys.up->value) {
-        message[0] = 'U';
-    } else {
-        message[0] = '_';
-    }
-    if (keys.down->value) {
-        message[1] = 'D';
-    } else {
-        message[1] = '_';
-    }
-    if (keys.left->value) {
-        message[2] = 'L';
-    } else {
-        message[2] = '_';
-    }
-    if (keys.right->value) {
-        message[3] = 'R';
-    } else {
-        message[3] = '_';
-    }
-    lf_set(display.message, message);
-}
-#include "include/ctarget/set_undef.h"
-ble_template_self_t* new_BLE_Template() {
-    ble_template_self_t* self = (ble_template_self_t*)_lf_new_reactor(sizeof(ble_template_self_t));
-    // Set the _width variable for all cases. This will be -2
-    // if the reactor is not a bank of reactors.
-    self->_lf_display_width = -2;
-    // Set the _width variable for all cases. This will be -2
-    // if the reactor is not a bank of reactors.
-    self->_lf_keys_width = -2;
-    #line 52 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.up_reactions[0] = &self->_lf__reaction_0;
-    #line 52 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.up_trigger.reactions = self->_lf_keys.up_reactions;
-    #line 52 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.up_trigger.last = NULL;
-    #line 52 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.up_trigger.number_of_reactions = 1;
-    #line 53 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.down_reactions[0] = &self->_lf__reaction_0;
-    #line 53 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.down_trigger.reactions = self->_lf_keys.down_reactions;
-    #line 53 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.down_trigger.last = NULL;
-    #line 53 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.down_trigger.number_of_reactions = 1;
-    #line 54 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.left_reactions[0] = &self->_lf__reaction_0;
-    #line 54 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.left_trigger.reactions = self->_lf_keys.left_reactions;
-    #line 54 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.left_trigger.last = NULL;
-    #line 54 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.left_trigger.number_of_reactions = 1;
-    #line 55 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.right_reactions[0] = &self->_lf__reaction_0;
-    #line 55 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.right_trigger.reactions = self->_lf_keys.right_reactions;
-    #line 55 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.right_trigger.last = NULL;
-    #line 55 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf_keys.right_trigger.number_of_reactions = 1;
-    #line 96 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.number = 0;
-    #line 96 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.function = ble_templatereaction_function_0;
-    #line 96 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.self = self;
-    #line 96 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.deadline_violation_handler = NULL;
-    #line 96 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.STP_handler = NULL;
-    #line 96 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.name = "?";
-    #line 96 "file:/home/lfvmu/eecs149-final-project/lf-buckler/src/BLE_Template.lf"
-    self->_lf__reaction_0.mode = NULL;
-    return self;
-}
-// =============== END reactor class BLE_Template
-// Array of pointers to timer triggers to be scheduled in _lf_initialize_timers().
-trigger_t* _lf_timer_triggers[1];
-int _lf_timer_triggers_size = 1;
-// Array of pointers to startup triggers.
-reaction_t* _lf_startup_reactions[2];
-int _lf_startup_reactions_size = 2;
-// Array of pointers to shutdown triggers.
-reaction_t** _lf_shutdown_reactions = NULL;
-int _lf_shutdown_reactions_size = 0;
-// Array of pointers to reset triggers.
-reaction_t** _lf_reset_reactions = NULL;
-int _lf_reset_reactions_size = 0;
-trigger_t* _lf_action_for_port(int port_id) {
-        return NULL;
-}
+// No watchdogs found.
+typedef void watchdog_t;
+watchdog_t* _lf_watchdogs = NULL;
+int _lf_watchdog_count = 0;
 void _lf_initialize_trigger_objects() {
-    // Initialize the _lf_clock
-    lf_initialize_clock();
-    // Create the array that will contain pointers to is_present fields to reset on each step.
-    _lf_is_present_fields_size = 5;
-    _lf_is_present_fields = (bool**)calloc(5, sizeof(bool*));
-    if (_lf_is_present_fields == NULL) lf_print_error_and_exit("Out of memory!");
-    _lf_is_present_fields_abbreviated = (bool**)calloc(5, sizeof(bool*));
-    if (_lf_is_present_fields_abbreviated == NULL) lf_print_error_and_exit("Out of memory!");
-    _lf_is_present_fields_abbreviated_size = 0;
-    int _lf_startup_reactions_count = 0;
-    SUPPRESS_UNUSED_WARNING(_lf_startup_reactions_count);
-    int _lf_shutdown_reactions_count = 0;
-    SUPPRESS_UNUSED_WARNING(_lf_shutdown_reactions_count);
-    int _lf_reset_reactions_count = 0;
-    SUPPRESS_UNUSED_WARNING(_lf_reset_reactions_count);
-    int _lf_timer_triggers_count = 0;
-    SUPPRESS_UNUSED_WARNING(_lf_timer_triggers_count);
-    int _lf_tokens_with_ref_count_count = 0;
-    SUPPRESS_UNUSED_WARNING(_lf_tokens_with_ref_count_count);
+    int startup_reaction_count[_num_enclaves] = {0}; SUPPRESS_UNUSED_WARNING(startup_reaction_count);
+    int shutdown_reaction_count[_num_enclaves] = {0}; SUPPRESS_UNUSED_WARNING(shutdown_reaction_count);
+    int reset_reaction_count[_num_enclaves] = {0}; SUPPRESS_UNUSED_WARNING(reset_reaction_count);
+    int timer_triggers_count[_num_enclaves] = {0}; SUPPRESS_UNUSED_WARNING(timer_triggers_count);
+    int modal_state_reset_count[_num_enclaves] = {0}; SUPPRESS_UNUSED_WARNING(modal_state_reset_count);
+    int modal_reactor_count[_num_enclaves] = {0}; SUPPRESS_UNUSED_WARNING(modal_reactor_count);
     int bank_index;
     SUPPRESS_UNUSED_WARNING(bank_index);
-    ble_template_self_t* ble_template_self[1];
-    SUPPRESS_UNUSED_WARNING(ble_template_self);
-    display_self_t* ble_template_display_self[1];
+    int watchdog_number = 0;
+    SUPPRESS_UNUSED_WARNING(watchdog_number);
+    _ble_template_main_main_self_t* ble_template_main_self[1];
+    SUPPRESS_UNUSED_WARNING(ble_template_main_self);
+    _display_self_t* ble_template_display_self[1];
     SUPPRESS_UNUSED_WARNING(ble_template_display_self);
-    arrowkeys_self_t* ble_template_keys_self[1];
-    SUPPRESS_UNUSED_WARNING(ble_template_keys_self);
+    _bluetoothreactor_self_t* ble_template_ble_inputs_self[1];
+    SUPPRESS_UNUSED_WARNING(ble_template_ble_inputs_self);
+    _robot_self_t* ble_template_robot_self[1];
+    SUPPRESS_UNUSED_WARNING(ble_template_robot_self);
     // ***** Start initializing BLE_Template of class BLE_Template
-    ble_template_self[0] = new_BLE_Template();
+    ble_template_main_self[0] = new__ble_template_main();
+    ble_template_main_self[0]->base.environment = &envs[ble_template_main];
     bank_index = 0; SUPPRESS_UNUSED_WARNING(bank_index);
-    ble_template_self[0]->_lf__reaction_0.deadline = NEVER;
+    envs[ble_template_main].startup_reactions[startup_reaction_count[ble_template_main]++] = &ble_template_main_self[0]->_lf__reaction_0;
+    SUPPRESS_UNUSED_WARNING(_lf_watchdog_count);
+    
+    ble_template_main_self[0]->_lf__reaction_0.deadline = NEVER;
+    ble_template_main_self[0]->_lf__reaction_1.deadline = NEVER;
+    ble_template_main_self[0]->_lf__reaction_2.deadline = NEVER;
     {
         // ***** Start initializing BLE_Template.display of class Display
-        ble_template_display_self[0] = new_Display();
+        ble_template_display_self[0] = new__display();
+        ble_template_display_self[0]->base.environment = &envs[ble_template_main];
         bank_index = 0; SUPPRESS_UNUSED_WARNING(bank_index);
         ble_template_display_self[0]->row = 0;
         // width of -2 indicates that it is not a multiport.
         ble_template_display_self[0]->_lf_message_width = -2;
-        _lf_startup_reactions[_lf_startup_reactions_count++] = &ble_template_display_self[0]->_lf__reaction_0;
+        envs[ble_template_main].startup_reactions[startup_reaction_count[ble_template_main]++] = &ble_template_display_self[0]->_lf__reaction_0;
+        SUPPRESS_UNUSED_WARNING(_lf_watchdog_count);
+    
         ble_template_display_self[0]->_lf__reaction_0.deadline = NEVER;
         ble_template_display_self[0]->_lf__reaction_1.deadline = NEVER;
         //***** End initializing BLE_Template.display
     }
     {
-        // ***** Start initializing BLE_Template.keys of class ArrowKeys
-        ble_template_keys_self[0] = new_ArrowKeys();
+        // ***** Start initializing BLE_Template.ble_inputs of class BluetoothReactor
+        ble_template_ble_inputs_self[0] = new__bluetoothreactor();
+        ble_template_ble_inputs_self[0]->base.environment = &envs[ble_template_main];
         bank_index = 0; SUPPRESS_UNUSED_WARNING(bank_index);
-        ble_template_keys_self[0]->period = MSEC(100);
+        ble_template_ble_inputs_self[0]->period = MSEC(100);
         // width of -2 indicates that it is not a multiport.
-        ble_template_keys_self[0]->_lf_up_width = -2;
+        ble_template_ble_inputs_self[0]->_lf_s1_width = -2;
         // width of -2 indicates that it is not a multiport.
-        ble_template_keys_self[0]->_lf_down_width = -2;
+        ble_template_ble_inputs_self[0]->_lf_s2_width = -2;
         // width of -2 indicates that it is not a multiport.
-        ble_template_keys_self[0]->_lf_left_width = -2;
+        ble_template_ble_inputs_self[0]->_lf_s3_width = -2;
         // width of -2 indicates that it is not a multiport.
-        ble_template_keys_self[0]->_lf_right_width = -2;
-        _lf_startup_reactions[_lf_startup_reactions_count++] = &ble_template_keys_self[0]->_lf__reaction_0;
-        // Initializing timer BLE_Template.keys.t.
-        ble_template_keys_self[0]->_lf__t.offset = 0;
-        ble_template_keys_self[0]->_lf__t.period = MSEC(100);
-        _lf_timer_triggers[_lf_timer_triggers_count++] = &ble_template_keys_self[0]->_lf__t;
-        ble_template_keys_self[0]->_lf__t.mode = NULL;
-        ble_template_keys_self[0]->_lf__reaction_0.deadline = NEVER;
-        ble_template_keys_self[0]->_lf__reaction_1.deadline = NEVER;
-        //***** End initializing BLE_Template.keys
+        ble_template_ble_inputs_self[0]->_lf_s4_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_ble_inputs_self[0]->_lf_s5_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_ble_inputs_self[0]->_lf_s6_width = -2;
+        envs[ble_template_main].startup_reactions[startup_reaction_count[ble_template_main]++] = &ble_template_ble_inputs_self[0]->_lf__reaction_0;
+        SUPPRESS_UNUSED_WARNING(_lf_watchdog_count);
+        // Initiaizing timer BLE_Template.ble_inputs.t.
+        ble_template_ble_inputs_self[0]->_lf__t.offset = 0;
+        ble_template_ble_inputs_self[0]->_lf__t.period = MSEC(100);
+        // Associate timer with the environment of its parent
+        envs[ble_template_main].timer_triggers[timer_triggers_count[ble_template_main]++] = &ble_template_ble_inputs_self[0]->_lf__t;
+        ble_template_ble_inputs_self[0]->_lf__t.mode = NULL;
+    
+        ble_template_ble_inputs_self[0]->_lf__reaction_0.deadline = NEVER;
+        ble_template_ble_inputs_self[0]->_lf__reaction_1.deadline = NEVER;
+        //***** End initializing BLE_Template.ble_inputs
+    }
+    {
+        // ***** Start initializing BLE_Template.robot of class Robot
+        ble_template_robot_self[0] = new__robot();
+        ble_template_robot_self[0]->base.environment = &envs[ble_template_main];
+        bank_index = 0; SUPPRESS_UNUSED_WARNING(bank_index);
+        // width of -2 indicates that it is not a multiport.
+        ble_template_robot_self[0]->_lf_notify_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_robot_self[0]->_lf_power_left_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_robot_self[0]->_lf_power_right_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_robot_self[0]->_lf_turn_left_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_robot_self[0]->_lf_turn_right_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_robot_self[0]->_lf_stop_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_robot_self[0]->_lf_obstacle_in_way_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_robot_self[0]->_lf_take_photo_width = -2;
+        // width of -2 indicates that it is not a multiport.
+        ble_template_robot_self[0]->_lf_drive_width = -2;
+        SUPPRESS_UNUSED_WARNING(_lf_watchdog_count);
+    
+        ble_template_robot_self[0]->_lf__reaction_0.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_1.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_2.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_3.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_4.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_5.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_6.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_7.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_8.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_9.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_10.deadline = NEVER;
+        ble_template_robot_self[0]->_lf__reaction_11.deadline = NEVER;
+        // Register for transition handling
+        envs[ble_template_main].modes->modal_reactor_states[modal_reactor_count[ble_template_main]++] = &((self_base_t*)ble_template_robot_self[0])->_lf__mode_state;
+        //***** End initializing BLE_Template.robot
     }
     //***** End initializing BLE_Template
     // **** Start deferred initialize for BLE_Template
     {
+    
         // Total number of outputs (single ports and multiport channels)
         // produced by reaction_0 of BLE_Template.
-        ble_template_self[0]->_lf__reaction_0.num_outputs = 1;
-        // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
-        // struct for this reaction.
-        ble_template_self[0]->_lf__reaction_0.triggers = (trigger_t***)_lf_allocate(
-                1, sizeof(trigger_t**),
-                &ble_template_self[0]->base.allocations);
-        ble_template_self[0]->_lf__reaction_0.triggered_sizes = (int*)_lf_allocate(
-                1, sizeof(int),
-                &ble_template_self[0]->base.allocations);
-        ble_template_self[0]->_lf__reaction_0.output_produced = (bool**)_lf_allocate(
-                1, sizeof(bool*),
-                &ble_template_self[0]->base.allocations);
+        ble_template_main_self[0]->_lf__reaction_0.num_outputs = 0;
         {
             int count = 0; SUPPRESS_UNUSED_WARNING(count);
-            // Reaction writes to an input of a contained reactor.
-            {
-                ble_template_self[0]->_lf__reaction_0.output_produced[count++] = &ble_template_self[0]->_lf_display.message.is_present;
-            }
         }
         
         // ** End initialization for reaction 0 of BLE_Template
+        // Total number of outputs (single ports and multiport channels)
+        // produced by reaction_1 of BLE_Template.
+        ble_template_main_self[0]->_lf__reaction_1.num_outputs = 0;
+        {
+            int count = 0; SUPPRESS_UNUSED_WARNING(count);
+        }
+        
+        // ** End initialization for reaction 1 of BLE_Template
+        // Total number of outputs (single ports and multiport channels)
+        // produced by reaction_2 of BLE_Template.
+        ble_template_main_self[0]->_lf__reaction_2.num_outputs = 0;
+        {
+            int count = 0; SUPPRESS_UNUSED_WARNING(count);
+        }
+        
+        // ** End initialization for reaction 2 of BLE_Template
+    
         // **** Start deferred initialize for BLE_Template.display
         {
+        
             // Total number of outputs (single ports and multiport channels)
             // produced by reaction_0 of BLE_Template.display.
             ble_template_display_self[0]->_lf__reaction_0.num_outputs = 0;
@@ -628,293 +204,1238 @@ void _lf_initialize_trigger_objects() {
             }
             
             // ** End initialization for reaction 1 of BLE_Template.display
+        
         }
         // **** End of deferred initialize for BLE_Template.display
-        // **** Start deferred initialize for BLE_Template.keys
+        // **** Start deferred initialize for BLE_Template.ble_inputs
         {
+        
             // Total number of outputs (single ports and multiport channels)
-            // produced by reaction_0 of BLE_Template.keys.
-            ble_template_keys_self[0]->_lf__reaction_0.num_outputs = 0;
+            // produced by reaction_0 of BLE_Template.ble_inputs.
+            ble_template_ble_inputs_self[0]->_lf__reaction_0.num_outputs = 0;
             {
                 int count = 0; SUPPRESS_UNUSED_WARNING(count);
             }
             
-            // ** End initialization for reaction 0 of BLE_Template.keys
+            // ** End initialization for reaction 0 of BLE_Template.ble_inputs
             // Total number of outputs (single ports and multiport channels)
-            // produced by reaction_1 of BLE_Template.keys.
-            ble_template_keys_self[0]->_lf__reaction_1.num_outputs = 4;
+            // produced by reaction_1 of BLE_Template.ble_inputs.
+            ble_template_ble_inputs_self[0]->_lf__reaction_1.num_outputs = 6;
             // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
             // struct for this reaction.
-            ble_template_keys_self[0]->_lf__reaction_1.triggers = (trigger_t***)_lf_allocate(
-                    4, sizeof(trigger_t**),
-                    &ble_template_keys_self[0]->base.allocations);
-            ble_template_keys_self[0]->_lf__reaction_1.triggered_sizes = (int*)_lf_allocate(
-                    4, sizeof(int),
-                    &ble_template_keys_self[0]->base.allocations);
-            ble_template_keys_self[0]->_lf__reaction_1.output_produced = (bool**)_lf_allocate(
-                    4, sizeof(bool*),
-                    &ble_template_keys_self[0]->base.allocations);
+            ble_template_ble_inputs_self[0]->_lf__reaction_1.triggers = (trigger_t***)_lf_allocate(
+                    6, sizeof(trigger_t**),
+                    &ble_template_ble_inputs_self[0]->base.allocations);
+            ble_template_ble_inputs_self[0]->_lf__reaction_1.triggered_sizes = (int*)_lf_allocate(
+                    6, sizeof(int),
+                    &ble_template_ble_inputs_self[0]->base.allocations);
+            ble_template_ble_inputs_self[0]->_lf__reaction_1.output_produced = (bool**)_lf_allocate(
+                    6, sizeof(bool*),
+                    &ble_template_ble_inputs_self[0]->base.allocations);
             {
                 int count = 0; SUPPRESS_UNUSED_WARNING(count);
                 {
-                    ble_template_keys_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_keys_self[0]->_lf_up.is_present;
+                    ble_template_ble_inputs_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_ble_inputs_self[0]->_lf_s1.is_present;
                 }
                 {
-                    ble_template_keys_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_keys_self[0]->_lf_down.is_present;
+                    ble_template_ble_inputs_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_ble_inputs_self[0]->_lf_s2.is_present;
                 }
                 {
-                    ble_template_keys_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_keys_self[0]->_lf_left.is_present;
+                    ble_template_ble_inputs_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_ble_inputs_self[0]->_lf_s3.is_present;
                 }
                 {
-                    ble_template_keys_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_keys_self[0]->_lf_right.is_present;
+                    ble_template_ble_inputs_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_ble_inputs_self[0]->_lf_s4.is_present;
+                }
+                {
+                    ble_template_ble_inputs_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_ble_inputs_self[0]->_lf_s5.is_present;
+                }
+                {
+                    ble_template_ble_inputs_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_ble_inputs_self[0]->_lf_s6.is_present;
                 }
             }
             
-            // ** End initialization for reaction 1 of BLE_Template.keys
+            // ** End initialization for reaction 1 of BLE_Template.ble_inputs
+        
         }
-        // **** End of deferred initialize for BLE_Template.keys
+        // **** End of deferred initialize for BLE_Template.ble_inputs
+        // **** Start deferred initialize for BLE_Template.robot
+        {
+        
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_0 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_0.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_0.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_0.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_0.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_0.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 0 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_1 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_1.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_1.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_1.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_1.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_1.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 1 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_2 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_2.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_2.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_2.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_2.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_2.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 2 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_3 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_3.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_3.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_3.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_3.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_3.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 3 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_4 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_4.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_4.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_4.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_4.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_4.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 4 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_5 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_5.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_5.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_5.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_5.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_5.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 5 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_6 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_6.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_6.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_6.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_6.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_6.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 6 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_7 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_7.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_7.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_7.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_7.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_7.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 7 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_8 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_8.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_8.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_8.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_8.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_8.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 8 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_9 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_9.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_9.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_9.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_9.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_9.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 9 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_10 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_10.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_10.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_10.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_10.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_10.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 10 of BLE_Template.robot
+            // Total number of outputs (single ports and multiport channels)
+            // produced by reaction_11 of BLE_Template.robot.
+            ble_template_robot_self[0]->_lf__reaction_11.num_outputs = 1;
+            // Allocate memory for triggers[] and triggered_sizes[] on the reaction_t
+            // struct for this reaction.
+            ble_template_robot_self[0]->_lf__reaction_11.triggers = (trigger_t***)_lf_allocate(
+                    1, sizeof(trigger_t**),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_11.triggered_sizes = (int*)_lf_allocate(
+                    1, sizeof(int),
+                    &ble_template_robot_self[0]->base.allocations);
+            ble_template_robot_self[0]->_lf__reaction_11.output_produced = (bool**)_lf_allocate(
+                    1, sizeof(bool*),
+                    &ble_template_robot_self[0]->base.allocations);
+            {
+                int count = 0; SUPPRESS_UNUSED_WARNING(count);
+                {
+                    ble_template_robot_self[0]->_lf__reaction_11.output_produced[count++] = &ble_template_robot_self[0]->_lf_notify.is_present;
+                }
+            }
+            
+            // ** End initialization for reaction 11 of BLE_Template.robot
+        
+        }
+        // **** End of deferred initialize for BLE_Template.robot
     }
     // **** End of deferred initialize for BLE_Template
     // **** Start non-nested deferred initialize for BLE_Template
-    // For reference counting, set num_destinations for port display.message.
-    // Iterate over range BLE_Template.display.message(0,1)->[BLE_Template.display.message(0,1)].
     {
-        int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-        int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-        int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-        ble_template_self[src_runtime]->_lf_display.message.num_destinations = 1;
-    }
-    {
-        int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
-        // Iterate over range BLE_Template.display.message(0,1)->[BLE_Template.display.message(0,1)].
+    
+    
+    
+        // **** Start non-nested deferred initialize for BLE_Template.display
         {
-            int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-            int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-            int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            // Reaction 0 of BLE_Template triggers 1 downstream reactions
-            // through port BLE_Template.display.message.
-            ble_template_self[src_runtime]->_lf__reaction_0.triggered_sizes[triggers_index[src_runtime]] = 1;
-            // For reaction 0 of BLE_Template, allocate an
-            // array of trigger pointers for downstream reactions through port BLE_Template.display.message
-            trigger_t** trigger_array = (trigger_t**)_lf_allocate(
-                    1, sizeof(trigger_t*),
-                    &ble_template_self[src_runtime]->base.allocations); 
-            ble_template_self[src_runtime]->_lf__reaction_0.triggers[triggers_index[src_runtime]++] = trigger_array;
+        
+        
+        
+        
         }
-        for (int i = 0; i < 1; i++) triggers_index[i] = 0;
-        // Iterate over ranges BLE_Template.display.message(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+        // **** End of non-nested deferred initialize for BLE_Template.display
+        // **** Start non-nested deferred initialize for BLE_Template.ble_inputs
         {
-            int src_runtime = 0; // Runtime index.
-            SUPPRESS_UNUSED_WARNING(src_runtime);
-            int src_channel = 0; // Channel index.
-            SUPPRESS_UNUSED_WARNING(src_channel);
-            int src_bank = 0; // Bank index.
-            SUPPRESS_UNUSED_WARNING(src_bank);
-            // Iterate over range BLE_Template.display.message(0,1).
+        
+            // For reference counting, set num_destinations for port BLE_Template.ble_inputs.s1.
+            // Iterate over range BLE_Template.ble_inputs.s1(0,1)->[BLE_Template.ble_inputs.s1(0,1)].
             {
-                int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
-                int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
-                int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
                 int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-                // Point to destination port BLE_Template.display.message's trigger struct.
-                ble_template_self[src_runtime]->_lf__reaction_0.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s1._base.num_destinations = 1;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s1._base.source_reactor = (self_base_t*)ble_template_ble_inputs_self[src_runtime];
             }
-        }
-    }
-    // **** Start non-nested deferred initialize for BLE_Template.display
-    // **** End of non-nested deferred initialize for BLE_Template.display
-    // **** Start non-nested deferred initialize for BLE_Template.keys
-    // For reference counting, set num_destinations for port BLE_Template.keys.up.
-    // Iterate over range BLE_Template.keys.up(0,1)->[BLE_Template.keys.up(0,1)].
-    {
-        int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-        int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-        int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-        ble_template_keys_self[src_runtime]->_lf_up.num_destinations = 1;
-    }
-    // For reference counting, set num_destinations for port BLE_Template.keys.down.
-    // Iterate over range BLE_Template.keys.down(0,1)->[BLE_Template.keys.down(0,1)].
-    {
-        int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-        int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-        int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-        ble_template_keys_self[src_runtime]->_lf_down.num_destinations = 1;
-    }
-    // For reference counting, set num_destinations for port BLE_Template.keys.left.
-    // Iterate over range BLE_Template.keys.left(0,1)->[BLE_Template.keys.left(0,1)].
-    {
-        int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-        int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-        int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-        ble_template_keys_self[src_runtime]->_lf_left.num_destinations = 1;
-    }
-    // For reference counting, set num_destinations for port BLE_Template.keys.right.
-    // Iterate over range BLE_Template.keys.right(0,1)->[BLE_Template.keys.right(0,1)].
-    {
-        int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-        int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-        int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-        ble_template_keys_self[src_runtime]->_lf_right.num_destinations = 1;
-    }
-    {
-        int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
-        // Iterate over range BLE_Template.keys.up(0,1)->[BLE_Template.keys.up(0,1)].
-        {
-            int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-            int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-            int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            // Reaction 1 of BLE_Template.keys triggers 1 downstream reactions
-            // through port BLE_Template.keys.up.
-            ble_template_keys_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
-            // For reaction 1 of BLE_Template.keys, allocate an
-            // array of trigger pointers for downstream reactions through port BLE_Template.keys.up
-            trigger_t** trigger_array = (trigger_t**)_lf_allocate(
-                    1, sizeof(trigger_t*),
-                    &ble_template_keys_self[src_runtime]->base.allocations); 
-            ble_template_keys_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
-        }
-        // Iterate over range BLE_Template.keys.down(0,1)->[BLE_Template.keys.down(0,1)].
-        {
-            int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-            int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-            int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            // Reaction 1 of BLE_Template.keys triggers 1 downstream reactions
-            // through port BLE_Template.keys.down.
-            ble_template_keys_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
-            // For reaction 1 of BLE_Template.keys, allocate an
-            // array of trigger pointers for downstream reactions through port BLE_Template.keys.down
-            trigger_t** trigger_array = (trigger_t**)_lf_allocate(
-                    1, sizeof(trigger_t*),
-                    &ble_template_keys_self[src_runtime]->base.allocations); 
-            ble_template_keys_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
-        }
-        // Iterate over range BLE_Template.keys.left(0,1)->[BLE_Template.keys.left(0,1)].
-        {
-            int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-            int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-            int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            // Reaction 1 of BLE_Template.keys triggers 1 downstream reactions
-            // through port BLE_Template.keys.left.
-            ble_template_keys_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
-            // For reaction 1 of BLE_Template.keys, allocate an
-            // array of trigger pointers for downstream reactions through port BLE_Template.keys.left
-            trigger_t** trigger_array = (trigger_t**)_lf_allocate(
-                    1, sizeof(trigger_t*),
-                    &ble_template_keys_self[src_runtime]->base.allocations); 
-            ble_template_keys_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
-        }
-        // Iterate over range BLE_Template.keys.right(0,1)->[BLE_Template.keys.right(0,1)].
-        {
-            int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
-            int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
-            int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
-            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            // Reaction 1 of BLE_Template.keys triggers 1 downstream reactions
-            // through port BLE_Template.keys.right.
-            ble_template_keys_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
-            // For reaction 1 of BLE_Template.keys, allocate an
-            // array of trigger pointers for downstream reactions through port BLE_Template.keys.right
-            trigger_t** trigger_array = (trigger_t**)_lf_allocate(
-                    1, sizeof(trigger_t*),
-                    &ble_template_keys_self[src_runtime]->base.allocations); 
-            ble_template_keys_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
-        }
-        for (int i = 0; i < 1; i++) triggers_index[i] = 0;
-        // Iterate over ranges BLE_Template.keys.up(0,1)->[BLE_Template.keys.up(0,1)] and BLE_Template.keys.up(0,1).
-        {
-            int src_runtime = 0; // Runtime index.
-            SUPPRESS_UNUSED_WARNING(src_runtime);
-            int src_channel = 0; // Channel index.
-            SUPPRESS_UNUSED_WARNING(src_channel);
-            int src_bank = 0; // Bank index.
-            SUPPRESS_UNUSED_WARNING(src_bank);
-            // Iterate over range BLE_Template.keys.up(0,1).
+            // For reference counting, set num_destinations for port BLE_Template.ble_inputs.s2.
+            // Iterate over range BLE_Template.ble_inputs.s2(0,1)->[BLE_Template.ble_inputs.s2(0,1)].
             {
-                int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
-                int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
-                int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
                 int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-                // Port BLE_Template.keys.up has reactions in its parent's parent.
-                // Point to the trigger struct for those reactions.
-                ble_template_keys_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_self[dst_runtime]->_lf_keys.up_trigger;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s2._base.num_destinations = 1;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s2._base.source_reactor = (self_base_t*)ble_template_ble_inputs_self[src_runtime];
             }
-        }
-        for (int i = 0; i < 1; i++) triggers_index[i] = 1;
-        // Iterate over ranges BLE_Template.keys.down(0,1)->[BLE_Template.keys.down(0,1)] and BLE_Template.keys.down(0,1).
-        {
-            int src_runtime = 0; // Runtime index.
-            SUPPRESS_UNUSED_WARNING(src_runtime);
-            int src_channel = 0; // Channel index.
-            SUPPRESS_UNUSED_WARNING(src_channel);
-            int src_bank = 0; // Bank index.
-            SUPPRESS_UNUSED_WARNING(src_bank);
-            // Iterate over range BLE_Template.keys.down(0,1).
+            // For reference counting, set num_destinations for port BLE_Template.ble_inputs.s3.
+            // Iterate over range BLE_Template.ble_inputs.s3(0,1)->[BLE_Template.ble_inputs.s3(0,1)].
             {
-                int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
-                int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
-                int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
                 int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-                // Port BLE_Template.keys.down has reactions in its parent's parent.
-                // Point to the trigger struct for those reactions.
-                ble_template_keys_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_self[dst_runtime]->_lf_keys.down_trigger;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s3._base.num_destinations = 1;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s3._base.source_reactor = (self_base_t*)ble_template_ble_inputs_self[src_runtime];
             }
-        }
-        for (int i = 0; i < 1; i++) triggers_index[i] = 2;
-        // Iterate over ranges BLE_Template.keys.left(0,1)->[BLE_Template.keys.left(0,1)] and BLE_Template.keys.left(0,1).
-        {
-            int src_runtime = 0; // Runtime index.
-            SUPPRESS_UNUSED_WARNING(src_runtime);
-            int src_channel = 0; // Channel index.
-            SUPPRESS_UNUSED_WARNING(src_channel);
-            int src_bank = 0; // Bank index.
-            SUPPRESS_UNUSED_WARNING(src_bank);
-            // Iterate over range BLE_Template.keys.left(0,1).
+            // For reference counting, set num_destinations for port BLE_Template.ble_inputs.s4.
+            // Iterate over range BLE_Template.ble_inputs.s4(0,1)->[BLE_Template.ble_inputs.s4(0,1)].
             {
-                int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
-                int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
-                int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
                 int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-                // Port BLE_Template.keys.left has reactions in its parent's parent.
-                // Point to the trigger struct for those reactions.
-                ble_template_keys_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_self[dst_runtime]->_lf_keys.left_trigger;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s4._base.num_destinations = 1;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s4._base.source_reactor = (self_base_t*)ble_template_ble_inputs_self[src_runtime];
             }
-        }
-        for (int i = 0; i < 1; i++) triggers_index[i] = 3;
-        // Iterate over ranges BLE_Template.keys.right(0,1)->[BLE_Template.keys.right(0,1)] and BLE_Template.keys.right(0,1).
-        {
-            int src_runtime = 0; // Runtime index.
-            SUPPRESS_UNUSED_WARNING(src_runtime);
-            int src_channel = 0; // Channel index.
-            SUPPRESS_UNUSED_WARNING(src_channel);
-            int src_bank = 0; // Bank index.
-            SUPPRESS_UNUSED_WARNING(src_bank);
-            // Iterate over range BLE_Template.keys.right(0,1).
+            // For reference counting, set num_destinations for port BLE_Template.ble_inputs.s5.
+            // Iterate over range BLE_Template.ble_inputs.s5(0,1)->[BLE_Template.ble_inputs.s5(0,1)].
             {
-                int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
-                int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
-                int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
                 int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-                // Port BLE_Template.keys.right has reactions in its parent's parent.
-                // Point to the trigger struct for those reactions.
-                ble_template_keys_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_self[dst_runtime]->_lf_keys.right_trigger;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s5._base.num_destinations = 1;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s5._base.source_reactor = (self_base_t*)ble_template_ble_inputs_self[src_runtime];
             }
+            // For reference counting, set num_destinations for port BLE_Template.ble_inputs.s6.
+            // Iterate over range BLE_Template.ble_inputs.s6(0,1)->[BLE_Template.ble_inputs.s6(0,1)].
+            {
+                int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                ble_template_ble_inputs_self[src_runtime]->_lf_s6._base.num_destinations = 1;
+                ble_template_ble_inputs_self[src_runtime]->_lf_s6._base.source_reactor = (self_base_t*)ble_template_ble_inputs_self[src_runtime];
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.ble_inputs.s1(0,1)->[BLE_Template.ble_inputs.s1(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 1 of BLE_Template.ble_inputs triggers 1 downstream reactions
+                    // through port BLE_Template.ble_inputs.s1.
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 1 of BLE_Template.ble_inputs, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.ble_inputs.s1
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_ble_inputs_self[src_runtime]->base.allocations); 
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                // Iterate over range BLE_Template.ble_inputs.s2(0,1)->[BLE_Template.ble_inputs.s2(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 1 of BLE_Template.ble_inputs triggers 1 downstream reactions
+                    // through port BLE_Template.ble_inputs.s2.
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 1 of BLE_Template.ble_inputs, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.ble_inputs.s2
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_ble_inputs_self[src_runtime]->base.allocations); 
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                // Iterate over range BLE_Template.ble_inputs.s3(0,1)->[BLE_Template.ble_inputs.s3(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 1 of BLE_Template.ble_inputs triggers 1 downstream reactions
+                    // through port BLE_Template.ble_inputs.s3.
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 1 of BLE_Template.ble_inputs, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.ble_inputs.s3
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_ble_inputs_self[src_runtime]->base.allocations); 
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                // Iterate over range BLE_Template.ble_inputs.s4(0,1)->[BLE_Template.ble_inputs.s4(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 1 of BLE_Template.ble_inputs triggers 1 downstream reactions
+                    // through port BLE_Template.ble_inputs.s4.
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 1 of BLE_Template.ble_inputs, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.ble_inputs.s4
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_ble_inputs_self[src_runtime]->base.allocations); 
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                // Iterate over range BLE_Template.ble_inputs.s5(0,1)->[BLE_Template.ble_inputs.s5(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 1 of BLE_Template.ble_inputs triggers 1 downstream reactions
+                    // through port BLE_Template.ble_inputs.s5.
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 1 of BLE_Template.ble_inputs, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.ble_inputs.s5
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_ble_inputs_self[src_runtime]->base.allocations); 
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                // Iterate over range BLE_Template.ble_inputs.s6(0,1)->[BLE_Template.ble_inputs.s6(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 1 of BLE_Template.ble_inputs triggers 1 downstream reactions
+                    // through port BLE_Template.ble_inputs.s6.
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 1 of BLE_Template.ble_inputs, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.ble_inputs.s6
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_ble_inputs_self[src_runtime]->base.allocations); 
+                    ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.ble_inputs.s1(0,1)->[BLE_Template.ble_inputs.s1(0,1)] and BLE_Template.ble_inputs.s1(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.ble_inputs.s1(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Port BLE_Template.ble_inputs.s1 has reactions in its parent's parent.
+                        // Point to the trigger struct for those reactions.
+                        ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_main_self[dst_runtime]->_lf_ble_inputs.s1_trigger;
+                    }
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 1;
+                // Iterate over ranges BLE_Template.ble_inputs.s2(0,1)->[BLE_Template.ble_inputs.s2(0,1)] and BLE_Template.ble_inputs.s2(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.ble_inputs.s2(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Port BLE_Template.ble_inputs.s2 has reactions in its parent's parent.
+                        // Point to the trigger struct for those reactions.
+                        ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_main_self[dst_runtime]->_lf_ble_inputs.s2_trigger;
+                    }
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 2;
+                // Iterate over ranges BLE_Template.ble_inputs.s3(0,1)->[BLE_Template.ble_inputs.s3(0,1)] and BLE_Template.ble_inputs.s3(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.ble_inputs.s3(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Port BLE_Template.ble_inputs.s3 has reactions in its parent's parent.
+                        // Point to the trigger struct for those reactions.
+                        ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_main_self[dst_runtime]->_lf_ble_inputs.s3_trigger;
+                    }
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 3;
+                // Iterate over ranges BLE_Template.ble_inputs.s4(0,1)->[BLE_Template.ble_inputs.s4(0,1)] and BLE_Template.ble_inputs.s4(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.ble_inputs.s4(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Port BLE_Template.ble_inputs.s4 has reactions in its parent's parent.
+                        // Point to the trigger struct for those reactions.
+                        ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_main_self[dst_runtime]->_lf_ble_inputs.s4_trigger;
+                    }
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 4;
+                // Iterate over ranges BLE_Template.ble_inputs.s5(0,1)->[BLE_Template.ble_inputs.s5(0,1)] and BLE_Template.ble_inputs.s5(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.ble_inputs.s5(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Port BLE_Template.ble_inputs.s5 has reactions in its parent's parent.
+                        // Point to the trigger struct for those reactions.
+                        ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_main_self[dst_runtime]->_lf_ble_inputs.s5_trigger;
+                    }
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 5;
+                // Iterate over ranges BLE_Template.ble_inputs.s6(0,1)->[BLE_Template.ble_inputs.s6(0,1)] and BLE_Template.ble_inputs.s6(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.ble_inputs.s6(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Port BLE_Template.ble_inputs.s6 has reactions in its parent's parent.
+                        // Point to the trigger struct for those reactions.
+                        ble_template_ble_inputs_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_main_self[dst_runtime]->_lf_ble_inputs.s6_trigger;
+                    }
+                }
+            }
+        
         }
+        // **** End of non-nested deferred initialize for BLE_Template.ble_inputs
+        // **** Start non-nested deferred initialize for BLE_Template.robot
+        {
+        
+            // For reference counting, set num_destinations for port BLE_Template.robot.notify.
+            // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+            {
+                int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                ble_template_robot_self[src_runtime]->_lf_notify._base.num_destinations = 1;
+                ble_template_robot_self[src_runtime]->_lf_notify._base.source_reactor = (self_base_t*)ble_template_robot_self[src_runtime];
+            }
+            // For reference counting, set num_destinations for port BLE_Template.robot.power_left.
+            // Iterate over range BLE_Template.robot.power_left(0,1)->[BLE_Template.robot.power_left(0,1)].
+            {
+                int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                ble_template_robot_self[src_runtime]->_lf_power_left._base.num_destinations = 1;
+                ble_template_robot_self[src_runtime]->_lf_power_left._base.source_reactor = (self_base_t*)ble_template_robot_self[src_runtime];
+            }
+            // For reference counting, set num_destinations for port BLE_Template.robot.power_right.
+            // Iterate over range BLE_Template.robot.power_right(0,1)->[BLE_Template.robot.power_right(0,1)].
+            {
+                int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                ble_template_robot_self[src_runtime]->_lf_power_right._base.num_destinations = 1;
+                ble_template_robot_self[src_runtime]->_lf_power_right._base.source_reactor = (self_base_t*)ble_template_robot_self[src_runtime];
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 0 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_0.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 0 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_0.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_0.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 1 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_1.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 1 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_1.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 2 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_2.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 2 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_2.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_2.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 3 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_3.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 3 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_3.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_3.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 4 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_4.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 4 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_4.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_4.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 5 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_5.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 5 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_5.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_5.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 6 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_6.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 6 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_6.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_6.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 7 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_7.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 7 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_7.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_7.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 8 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_8.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 8 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_8.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_8.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 9 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_9.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 9 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_9.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_9.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 10 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_10.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 10 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_10.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_10.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+            {
+                int triggers_index[1] = { 0 }; // Number of bank members with the reaction.
+                // Iterate over range BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)].
+                {
+                    int src_runtime = 0; SUPPRESS_UNUSED_WARNING(src_runtime); // Runtime index.
+                    int src_channel = 0; SUPPRESS_UNUSED_WARNING(src_channel); // Channel index.
+                    int src_bank = 0; SUPPRESS_UNUSED_WARNING(src_bank); // Bank index.
+                    int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                    // Reaction 11 of BLE_Template.robot triggers 1 downstream reactions
+                    // through port BLE_Template.robot.notify.
+                    ble_template_robot_self[src_runtime]->_lf__reaction_11.triggered_sizes[triggers_index[src_runtime]] = 1;
+                    // For reaction 11 of BLE_Template.robot, allocate an
+                    // array of trigger pointers for downstream reactions through port BLE_Template.robot.notify
+                    trigger_t** trigger_array = (trigger_t**)_lf_allocate(
+                            1, sizeof(trigger_t*),
+                            &ble_template_robot_self[src_runtime]->base.allocations); 
+                    ble_template_robot_self[src_runtime]->_lf__reaction_11.triggers[triggers_index[src_runtime]++] = trigger_array;
+                }
+                for (int i = 0; i < 1; i++) triggers_index[i] = 0;
+                // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+                {
+                    int src_runtime = 0; // Runtime index.
+                    SUPPRESS_UNUSED_WARNING(src_runtime);
+                    int src_channel = 0; // Channel index.
+                    SUPPRESS_UNUSED_WARNING(src_channel);
+                    int src_bank = 0; // Bank index.
+                    SUPPRESS_UNUSED_WARNING(src_bank);
+                    // Iterate over range BLE_Template.display.message(0,1).
+                    {
+                        int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+                        int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+                        int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+                        int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+                        // Point to destination port BLE_Template.display.message's trigger struct.
+                        ble_template_robot_self[src_runtime]->_lf__reaction_11.triggers[triggers_index[src_runtime] + src_channel][0] = &ble_template_display_self[dst_runtime]->_lf__message;
+                    }
+                }
+            }
+        
+        }
+        // **** End of non-nested deferred initialize for BLE_Template.robot
     }
-    // **** End of non-nested deferred initialize for BLE_Template.keys
     // **** End of non-nested deferred initialize for BLE_Template
     // Connect inputs and outputs for reactor BLE_Template.
     // Connect inputs and outputs for reactor BLE_Template.display.
-    // Connect BLE_Template.display.message(0,1)->[BLE_Template.display.message(0,1)] to port BLE_Template.display.message(0,1)
-    // Iterate over ranges BLE_Template.display.message(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
+    // Connect inputs and outputs for reactor BLE_Template.ble_inputs.
+    // Connect BLE_Template.ble_inputs.s1(0,1)->[BLE_Template.ble_inputs.s1(0,1)] to port BLE_Template.ble_inputs.s1(0,1)
+    // Iterate over ranges BLE_Template.ble_inputs.s1(0,1)->[BLE_Template.ble_inputs.s1(0,1)] and BLE_Template.ble_inputs.s1(0,1).
+    {
+        int src_runtime = 0; // Runtime index.
+        SUPPRESS_UNUSED_WARNING(src_runtime);
+        int src_channel = 0; // Channel index.
+        SUPPRESS_UNUSED_WARNING(src_channel);
+        int src_bank = 0; // Bank index.
+        SUPPRESS_UNUSED_WARNING(src_bank);
+        // Iterate over range BLE_Template.ble_inputs.s1(0,1).
+        {
+            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+            ble_template_main_self[dst_runtime]->_lf_ble_inputs.s1 = (_bluetoothreactor_s1_t*)&ble_template_ble_inputs_self[src_runtime]->_lf_s1;
+        }
+    }
+    // Connect BLE_Template.ble_inputs.s2(0,1)->[BLE_Template.ble_inputs.s2(0,1)] to port BLE_Template.ble_inputs.s2(0,1)
+    // Iterate over ranges BLE_Template.ble_inputs.s2(0,1)->[BLE_Template.ble_inputs.s2(0,1)] and BLE_Template.ble_inputs.s2(0,1).
+    {
+        int src_runtime = 0; // Runtime index.
+        SUPPRESS_UNUSED_WARNING(src_runtime);
+        int src_channel = 0; // Channel index.
+        SUPPRESS_UNUSED_WARNING(src_channel);
+        int src_bank = 0; // Bank index.
+        SUPPRESS_UNUSED_WARNING(src_bank);
+        // Iterate over range BLE_Template.ble_inputs.s2(0,1).
+        {
+            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+            ble_template_main_self[dst_runtime]->_lf_ble_inputs.s2 = (_bluetoothreactor_s2_t*)&ble_template_ble_inputs_self[src_runtime]->_lf_s2;
+        }
+    }
+    // Connect BLE_Template.ble_inputs.s3(0,1)->[BLE_Template.ble_inputs.s3(0,1)] to port BLE_Template.ble_inputs.s3(0,1)
+    // Iterate over ranges BLE_Template.ble_inputs.s3(0,1)->[BLE_Template.ble_inputs.s3(0,1)] and BLE_Template.ble_inputs.s3(0,1).
+    {
+        int src_runtime = 0; // Runtime index.
+        SUPPRESS_UNUSED_WARNING(src_runtime);
+        int src_channel = 0; // Channel index.
+        SUPPRESS_UNUSED_WARNING(src_channel);
+        int src_bank = 0; // Bank index.
+        SUPPRESS_UNUSED_WARNING(src_bank);
+        // Iterate over range BLE_Template.ble_inputs.s3(0,1).
+        {
+            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+            ble_template_main_self[dst_runtime]->_lf_ble_inputs.s3 = (_bluetoothreactor_s3_t*)&ble_template_ble_inputs_self[src_runtime]->_lf_s3;
+        }
+    }
+    // Connect BLE_Template.ble_inputs.s4(0,1)->[BLE_Template.ble_inputs.s4(0,1)] to port BLE_Template.ble_inputs.s4(0,1)
+    // Iterate over ranges BLE_Template.ble_inputs.s4(0,1)->[BLE_Template.ble_inputs.s4(0,1)] and BLE_Template.ble_inputs.s4(0,1).
+    {
+        int src_runtime = 0; // Runtime index.
+        SUPPRESS_UNUSED_WARNING(src_runtime);
+        int src_channel = 0; // Channel index.
+        SUPPRESS_UNUSED_WARNING(src_channel);
+        int src_bank = 0; // Bank index.
+        SUPPRESS_UNUSED_WARNING(src_bank);
+        // Iterate over range BLE_Template.ble_inputs.s4(0,1).
+        {
+            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+            ble_template_main_self[dst_runtime]->_lf_ble_inputs.s4 = (_bluetoothreactor_s4_t*)&ble_template_ble_inputs_self[src_runtime]->_lf_s4;
+        }
+    }
+    // Connect BLE_Template.ble_inputs.s5(0,1)->[BLE_Template.ble_inputs.s5(0,1)] to port BLE_Template.ble_inputs.s5(0,1)
+    // Iterate over ranges BLE_Template.ble_inputs.s5(0,1)->[BLE_Template.ble_inputs.s5(0,1)] and BLE_Template.ble_inputs.s5(0,1).
+    {
+        int src_runtime = 0; // Runtime index.
+        SUPPRESS_UNUSED_WARNING(src_runtime);
+        int src_channel = 0; // Channel index.
+        SUPPRESS_UNUSED_WARNING(src_channel);
+        int src_bank = 0; // Bank index.
+        SUPPRESS_UNUSED_WARNING(src_bank);
+        // Iterate over range BLE_Template.ble_inputs.s5(0,1).
+        {
+            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+            ble_template_main_self[dst_runtime]->_lf_ble_inputs.s5 = (_bluetoothreactor_s5_t*)&ble_template_ble_inputs_self[src_runtime]->_lf_s5;
+        }
+    }
+    // Connect BLE_Template.ble_inputs.s6(0,1)->[BLE_Template.ble_inputs.s6(0,1)] to port BLE_Template.ble_inputs.s6(0,1)
+    // Iterate over ranges BLE_Template.ble_inputs.s6(0,1)->[BLE_Template.ble_inputs.s6(0,1)] and BLE_Template.ble_inputs.s6(0,1).
+    {
+        int src_runtime = 0; // Runtime index.
+        SUPPRESS_UNUSED_WARNING(src_runtime);
+        int src_channel = 0; // Channel index.
+        SUPPRESS_UNUSED_WARNING(src_channel);
+        int src_bank = 0; // Bank index.
+        SUPPRESS_UNUSED_WARNING(src_bank);
+        // Iterate over range BLE_Template.ble_inputs.s6(0,1).
+        {
+            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
+            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
+            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
+            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
+            ble_template_main_self[dst_runtime]->_lf_ble_inputs.s6 = (_bluetoothreactor_s6_t*)&ble_template_ble_inputs_self[src_runtime]->_lf_s6;
+        }
+    }
+    // Connect inputs and outputs for reactor BLE_Template.robot.
+    // Connect BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] to port BLE_Template.display.message(0,1)
+    // Iterate over ranges BLE_Template.robot.notify(0,1)->[BLE_Template.display.message(0,1)] and BLE_Template.display.message(0,1).
     {
         int src_runtime = 0; // Runtime index.
         SUPPRESS_UNUSED_WARNING(src_runtime);
@@ -928,162 +1449,184 @@ void _lf_initialize_trigger_objects() {
             int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
             int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
             int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            ble_template_display_self[dst_runtime]->_lf_message = (display_message_t*)&ble_template_self[src_runtime]->_lf_display.message;
-        }
-    }
-    // Connect inputs and outputs for reactor BLE_Template.keys.
-    // Connect BLE_Template.keys.up(0,1)->[BLE_Template.keys.up(0,1)] to port BLE_Template.keys.up(0,1)
-    // Iterate over ranges BLE_Template.keys.up(0,1)->[BLE_Template.keys.up(0,1)] and BLE_Template.keys.up(0,1).
-    {
-        int src_runtime = 0; // Runtime index.
-        SUPPRESS_UNUSED_WARNING(src_runtime);
-        int src_channel = 0; // Channel index.
-        SUPPRESS_UNUSED_WARNING(src_channel);
-        int src_bank = 0; // Bank index.
-        SUPPRESS_UNUSED_WARNING(src_bank);
-        // Iterate over range BLE_Template.keys.up(0,1).
-        {
-            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
-            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
-            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
-            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            ble_template_self[dst_runtime]->_lf_keys.up = (arrowkeys_up_t*)&ble_template_keys_self[src_runtime]->_lf_up;
-        }
-    }
-    // Connect BLE_Template.keys.down(0,1)->[BLE_Template.keys.down(0,1)] to port BLE_Template.keys.down(0,1)
-    // Iterate over ranges BLE_Template.keys.down(0,1)->[BLE_Template.keys.down(0,1)] and BLE_Template.keys.down(0,1).
-    {
-        int src_runtime = 0; // Runtime index.
-        SUPPRESS_UNUSED_WARNING(src_runtime);
-        int src_channel = 0; // Channel index.
-        SUPPRESS_UNUSED_WARNING(src_channel);
-        int src_bank = 0; // Bank index.
-        SUPPRESS_UNUSED_WARNING(src_bank);
-        // Iterate over range BLE_Template.keys.down(0,1).
-        {
-            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
-            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
-            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
-            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            ble_template_self[dst_runtime]->_lf_keys.down = (arrowkeys_down_t*)&ble_template_keys_self[src_runtime]->_lf_down;
-        }
-    }
-    // Connect BLE_Template.keys.left(0,1)->[BLE_Template.keys.left(0,1)] to port BLE_Template.keys.left(0,1)
-    // Iterate over ranges BLE_Template.keys.left(0,1)->[BLE_Template.keys.left(0,1)] and BLE_Template.keys.left(0,1).
-    {
-        int src_runtime = 0; // Runtime index.
-        SUPPRESS_UNUSED_WARNING(src_runtime);
-        int src_channel = 0; // Channel index.
-        SUPPRESS_UNUSED_WARNING(src_channel);
-        int src_bank = 0; // Bank index.
-        SUPPRESS_UNUSED_WARNING(src_bank);
-        // Iterate over range BLE_Template.keys.left(0,1).
-        {
-            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
-            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
-            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
-            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            ble_template_self[dst_runtime]->_lf_keys.left = (arrowkeys_left_t*)&ble_template_keys_self[src_runtime]->_lf_left;
-        }
-    }
-    // Connect BLE_Template.keys.right(0,1)->[BLE_Template.keys.right(0,1)] to port BLE_Template.keys.right(0,1)
-    // Iterate over ranges BLE_Template.keys.right(0,1)->[BLE_Template.keys.right(0,1)] and BLE_Template.keys.right(0,1).
-    {
-        int src_runtime = 0; // Runtime index.
-        SUPPRESS_UNUSED_WARNING(src_runtime);
-        int src_channel = 0; // Channel index.
-        SUPPRESS_UNUSED_WARNING(src_channel);
-        int src_bank = 0; // Bank index.
-        SUPPRESS_UNUSED_WARNING(src_bank);
-        // Iterate over range BLE_Template.keys.right(0,1).
-        {
-            int dst_runtime = 0; SUPPRESS_UNUSED_WARNING(dst_runtime); // Runtime index.
-            int dst_channel = 0; SUPPRESS_UNUSED_WARNING(dst_channel); // Channel index.
-            int dst_bank = 0; SUPPRESS_UNUSED_WARNING(dst_bank); // Bank index.
-            int range_count = 0; SUPPRESS_UNUSED_WARNING(range_count);
-            ble_template_self[dst_runtime]->_lf_keys.right = (arrowkeys_right_t*)&ble_template_keys_self[src_runtime]->_lf_right;
+            ble_template_display_self[dst_runtime]->_lf_message = (_display_message_t*)&ble_template_robot_self[src_runtime]->_lf_notify;
         }
     }
     {
     }
     {
     }
-    // Add port BLE_Template.display.message to array of is_present fields.
+    {
+    }
     {
         int count = 0; SUPPRESS_UNUSED_WARNING(count);
         {
-            {
-                _lf_is_present_fields[0 + count] = &ble_template_self[0]->_lf_display.message.is_present;
-                count++;
-            }
+            // Add port BLE_Template.ble_inputs.s1 to array of is_present fields.
+            envs[ble_template_main].is_present_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s1.is_present;
+            #ifdef FEDERATED_DECENTRALIZED
+            // Add port BLE_Template.ble_inputs.s1 to array of intended_tag fields.
+            envs[ble_template_main]._lf_intended_tag_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s1.intended_tag;
+            #endif // FEDERATED_DECENTRALIZED
+            count++;
+            // Add port BLE_Template.ble_inputs.s2 to array of is_present fields.
+            envs[ble_template_main].is_present_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s2.is_present;
+            #ifdef FEDERATED_DECENTRALIZED
+            // Add port BLE_Template.ble_inputs.s2 to array of intended_tag fields.
+            envs[ble_template_main]._lf_intended_tag_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s2.intended_tag;
+            #endif // FEDERATED_DECENTRALIZED
+            count++;
+            // Add port BLE_Template.ble_inputs.s3 to array of is_present fields.
+            envs[ble_template_main].is_present_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s3.is_present;
+            #ifdef FEDERATED_DECENTRALIZED
+            // Add port BLE_Template.ble_inputs.s3 to array of intended_tag fields.
+            envs[ble_template_main]._lf_intended_tag_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s3.intended_tag;
+            #endif // FEDERATED_DECENTRALIZED
+            count++;
+            // Add port BLE_Template.ble_inputs.s4 to array of is_present fields.
+            envs[ble_template_main].is_present_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s4.is_present;
+            #ifdef FEDERATED_DECENTRALIZED
+            // Add port BLE_Template.ble_inputs.s4 to array of intended_tag fields.
+            envs[ble_template_main]._lf_intended_tag_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s4.intended_tag;
+            #endif // FEDERATED_DECENTRALIZED
+            count++;
+            // Add port BLE_Template.ble_inputs.s5 to array of is_present fields.
+            envs[ble_template_main].is_present_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s5.is_present;
+            #ifdef FEDERATED_DECENTRALIZED
+            // Add port BLE_Template.ble_inputs.s5 to array of intended_tag fields.
+            envs[ble_template_main]._lf_intended_tag_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s5.intended_tag;
+            #endif // FEDERATED_DECENTRALIZED
+            count++;
+            // Add port BLE_Template.ble_inputs.s6 to array of is_present fields.
+            envs[ble_template_main].is_present_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s6.is_present;
+            #ifdef FEDERATED_DECENTRALIZED
+            // Add port BLE_Template.ble_inputs.s6 to array of intended_tag fields.
+            envs[ble_template_main]._lf_intended_tag_fields[0 + count] = &ble_template_ble_inputs_self[0]->_lf_s6.intended_tag;
+            #endif // FEDERATED_DECENTRALIZED
+            count++;
         }
     }
     {
         int count = 0; SUPPRESS_UNUSED_WARNING(count);
         {
-            // Add port BLE_Template.keys.up to array of is_present fields.
-            _lf_is_present_fields[1 + count] = &ble_template_keys_self[0]->_lf_up.is_present;
-            count++;
-            // Add port BLE_Template.keys.down to array of is_present fields.
-            _lf_is_present_fields[1 + count] = &ble_template_keys_self[0]->_lf_down.is_present;
-            count++;
-            // Add port BLE_Template.keys.left to array of is_present fields.
-            _lf_is_present_fields[1 + count] = &ble_template_keys_self[0]->_lf_left.is_present;
-            count++;
-            // Add port BLE_Template.keys.right to array of is_present fields.
-            _lf_is_present_fields[1 + count] = &ble_template_keys_self[0]->_lf_right.is_present;
+            // Add port BLE_Template.robot.notify to array of is_present fields.
+            envs[ble_template_main].is_present_fields[6 + count] = &ble_template_robot_self[0]->_lf_notify.is_present;
+            #ifdef FEDERATED_DECENTRALIZED
+            // Add port BLE_Template.robot.notify to array of intended_tag fields.
+            envs[ble_template_main]._lf_intended_tag_fields[6 + count] = &ble_template_robot_self[0]->_lf_notify.intended_tag;
+            #endif // FEDERATED_DECENTRALIZED
             count++;
         }
     }
+    
     // Set reaction priorities for ReactorInstance BLE_Template
     {
-        ble_template_self[0]->_lf__reaction_0.chain_id = 1;
+        ble_template_main_self[0]->_lf__reaction_0.chain_id = 1;
+        // index is the OR of level 0 and 
+        // deadline 9223372036854775807 shifted left 16 bits.
+        ble_template_main_self[0]->_lf__reaction_0.index = 0xffffffffffff0000LL;
+        ble_template_main_self[0]->_lf__reaction_1.chain_id = 1;
         // index is the OR of level 2 and 
-        // deadline 140737488355327 shifted left 16 bits.
-        ble_template_self[0]->_lf__reaction_0.index = 0x7fffffffffff0002LL;
+        // deadline 9223372036854775807 shifted left 16 bits.
+        ble_template_main_self[0]->_lf__reaction_1.index = 0xffffffffffff0002LL;
+        ble_template_main_self[0]->_lf__reaction_2.chain_id = 1;
+        // index is the OR of level 3 and 
+        // deadline 9223372036854775807 shifted left 16 bits.
+        ble_template_main_self[0]->_lf__reaction_2.index = 0xffffffffffff0003LL;
+    
         // Set reaction priorities for ReactorInstance BLE_Template.display
         {
             ble_template_display_self[0]->_lf__reaction_0.chain_id = 1;
             // index is the OR of level 0 and 
-            // deadline 140737488355327 shifted left 16 bits.
-            ble_template_display_self[0]->_lf__reaction_0.index = 0x7fffffffffff0000LL;
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_display_self[0]->_lf__reaction_0.index = 0xffffffffffff0000LL;
             ble_template_display_self[0]->_lf__reaction_1.chain_id = 1;
-            // index is the OR of level 3 and 
-            // deadline 140737488355327 shifted left 16 bits.
-            ble_template_display_self[0]->_lf__reaction_1.index = 0x7fffffffffff0003LL;
+            // index is the OR of level 12 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_display_self[0]->_lf__reaction_1.index = 0xffffffffffff000cLL;
         }
-        // Set reaction priorities for ReactorInstance BLE_Template.keys
+    
+    
+        // Set reaction priorities for ReactorInstance BLE_Template.ble_inputs
         {
-            ble_template_keys_self[0]->_lf__reaction_0.chain_id = 1;
+            ble_template_ble_inputs_self[0]->_lf__reaction_0.chain_id = 1;
             // index is the OR of level 0 and 
-            // deadline 140737488355327 shifted left 16 bits.
-            ble_template_keys_self[0]->_lf__reaction_0.index = 0x7fffffffffff0000LL;
-            ble_template_keys_self[0]->_lf__reaction_1.chain_id = 1;
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_ble_inputs_self[0]->_lf__reaction_0.index = 0xffffffffffff0000LL;
+            ble_template_ble_inputs_self[0]->_lf__reaction_1.chain_id = 1;
             // index is the OR of level 1 and 
-            // deadline 140737488355327 shifted left 16 bits.
-            ble_template_keys_self[0]->_lf__reaction_1.index = 0x7fffffffffff0001LL;
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_ble_inputs_self[0]->_lf__reaction_1.index = 0xffffffffffff0001LL;
         }
-    }
-}
-void _lf_trigger_startup_reactions() {
-    for (int i = 0; i < _lf_startup_reactions_size; i++) {
-        if (_lf_startup_reactions[i] != NULL) {
-            _lf_trigger_reaction(_lf_startup_reactions[i], -1);
+    
+    
+        // Set reaction priorities for ReactorInstance BLE_Template.robot
+        {
+            ble_template_robot_self[0]->_lf__reaction_0.chain_id = 1;
+            // index is the OR of level 0 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_0.index = 0xffffffffffff0000LL;
+            ble_template_robot_self[0]->_lf__reaction_1.chain_id = 1;
+            // index is the OR of level 1 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_1.index = 0xffffffffffff0001LL;
+            ble_template_robot_self[0]->_lf__reaction_2.chain_id = 1;
+            // index is the OR of level 2 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_2.index = 0xffffffffffff0002LL;
+            ble_template_robot_self[0]->_lf__reaction_3.chain_id = 1;
+            // index is the OR of level 3 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_3.index = 0xffffffffffff0003LL;
+            ble_template_robot_self[0]->_lf__reaction_4.chain_id = 1;
+            // index is the OR of level 4 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_4.index = 0xffffffffffff0004LL;
+            ble_template_robot_self[0]->_lf__reaction_5.chain_id = 1;
+            // index is the OR of level 5 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_5.index = 0xffffffffffff0005LL;
+            ble_template_robot_self[0]->_lf__reaction_6.chain_id = 1;
+            // index is the OR of level 6 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_6.index = 0xffffffffffff0006LL;
+            ble_template_robot_self[0]->_lf__reaction_7.chain_id = 1;
+            // index is the OR of level 7 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_7.index = 0xffffffffffff0007LL;
+            ble_template_robot_self[0]->_lf__reaction_8.chain_id = 1;
+            // index is the OR of level 8 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_8.index = 0xffffffffffff0008LL;
+            ble_template_robot_self[0]->_lf__reaction_9.chain_id = 1;
+            // index is the OR of level 9 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_9.index = 0xffffffffffff0009LL;
+            ble_template_robot_self[0]->_lf__reaction_10.chain_id = 1;
+            // index is the OR of level 10 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_10.index = 0xffffffffffff000aLL;
+            ble_template_robot_self[0]->_lf__reaction_11.chain_id = 1;
+            // index is the OR of level 11 and 
+            // deadline 9223372036854775807 shifted left 16 bits.
+            ble_template_robot_self[0]->_lf__reaction_11.index = 0xffffffffffff000bLL;
         }
+    
     }
-}
-void _lf_initialize_timers() {
-    for (int i = 0; i < _lf_timer_triggers_size; i++) {
-        if (_lf_timer_triggers[i] != NULL) {
-            _lf_initialize_timer(_lf_timer_triggers[i]);
-        }
-    }
+    
 
+    #ifdef EXECUTABLE_PREAMBLE
+    _lf_executable_preamble(&envs[0]);
+    #endif
+    #ifdef FEDERATED
+    initialize_triggers_for_federate();
+    #endif // FEDERATED
 }
 void logical_tag_complete(tag_t tag_to_send) {
+#ifdef FEDERATED_CENTRALIZED
+        _lf_logical_tag_complete(tag_to_send);
+#endif // FEDERATED_CENTRALIZED
 
 }
-bool _lf_trigger_shutdown_reactions() {
-    return false;
-}
-void terminate_execution() {}
+#ifndef FEDERATED
+void terminate_execution(environment_t* env) {}
+#endif
