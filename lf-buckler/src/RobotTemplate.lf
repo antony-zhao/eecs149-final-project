@@ -31,6 +31,7 @@ reactor Robot {
         reaction(drive) -> DRIVING, notify {=
             lf_set_mode(DRIVING);
             lf_set(notify, "DRIVING");
+            romi_drive_direct(100, 100);
         =}
     }
 
@@ -38,12 +39,13 @@ reactor Robot {
         reaction(drive) -> STOPPED, notify {=
             lf_set_mode(STOPPED);
             lf_set(notify, "STOPPED");
+            romi_drive_direct(0, 0);
         =}
     }
 }
 
 main reactor {
-    timer t(0, 2 sec);
+    timer t(0, 4 sec);
     state drive:bool(false);
     robot = new Robot();
     display = new Display();

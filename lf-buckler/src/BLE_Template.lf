@@ -7,6 +7,7 @@ import Display from "lib/Display.lf"
 
 preamble {=
     #include "simple_ble.h"
+    #include "lib/romi.h"
 
     // Data structures needed for BLE.
     // See https://github.com/lab11/nrf52x-base/blob/master/lib/simple_ble/README.md
@@ -17,7 +18,7 @@ preamble {=
             // MAC address: c0:98:e5:49:xx:xx
             // where the last two octets are given by the device_id below.
             .platform_id       = 0x49,   // The 4th octet in device BLE address.
-            .device_id         = 0xAABB, // TODO: replace with your lab bench number
+            .device_id         = 0x0001, // TODO: replace with your lab bench number
             .adv_name          = "ROMI", // used in advertisements if there is room
             .adv_interval      = MSEC_TO_UNITS(100, UNIT_0_625_MS),
             .min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
@@ -35,7 +36,7 @@ preamble {=
     // The characteristic is identified within the service by a 16-bit unique ID.
     static simple_ble_char_t key_state_characteristic = {.uuid16 = 0x7182};
 
-    static bool inputs[6] = {false, false, false, false, false, false};
+    static bool keys[4] = {false, false, false, false};
 =}
 
 /**
@@ -47,14 +48,12 @@ preamble {=
  * arrow key is currently pressed.  The period is given as
  * a parameter.
  */
-reactor BluetoothReactor(period:time(100 ms)) {
+reactor ArrowKeys(period:time(100 ms)) {
 
-    output s1:bool;
-    output s2:bool;
-    output s3:bool;
-    output s4:bool;
-    output s5:bool;
-    output s6:bool;
+    output up:bool;
+    output down:bool;
+    output left:bool;
+    output right:bool;
 
     timer t(0, period);
 
@@ -68,122 +67,24 @@ reactor BluetoothReactor(period:time(100 ms)) {
         simple_ble_add_characteristic(1, 1, 0, 0, sizeof(keys), (uint8_t*)&keys, &romi_service, &key_state_characteristic);
 
         simple_ble_adv_only_name();
+        
+        APP_ERROR_CHECK(romi_init());
         // Your code goes here.
     =}
 
-    reaction(t) -> s1, s2, s3, s4, s5, s6 {=
+    reaction(t) -> up, down, left, right {=
         // Output a boolean for each arrow key, where true
         // indicates that the key is currently pressed and false
         // indicates that it is not.
 
         // Your code goes here.
-        lf_set(s1, keys[0]);
-        lf_set(s2, keys[1]);
-        lf_set(s3, keys[2]);
-        lf_set(s4, keys[3]);
-        lf_set(s5, keys[4]);
-        lf_set(s6, keys[5]);
+        lf_set(up, keys[0]);
+        lf_set(down, keys[1]);
+        lf_set(left, keys[2]);
+        lf_set(right, keys[3]);
     =}
 }
 
-reactor Robot {
-    input turn_left:bool;
-    input turn_right:bool;
-    input stop:bool;
-    input obstacle_in_way:bool;
-    input take_photo:bool;
-    input drive:bool;
-
-    output notify:string;
-    output power_left:int;
-    output power_right:int;
-
-    initial mode STOPPED {
-        reaction(turn_left) -> TURN_LEFT, notify {=
-            lf_set(notify, "LEFT");
-            lf_set_mode(TURN_LEFT);
-            lf_set(power_left, -100);
-            lf_set(power_right, 100);
-        =}
-        reaction (turn_right) -> TURN_RIGHT, notify {=
-            lf_set(notify, "RIGHT");
-            lf_set_mode(TURN_RIGHT);
-            lf_set(power_left, 100);
-            lf_set(power_right, -100);
-        =}
-        reaction (obstacle_in_way) -> AVOID_OBSTACLE, notify {=
-            lf_set(notify, "AVOID");
-            lf_set_mode(AVOID_OBSTACLE)
-            lf_set(power_left, -100);
-            lf_set(power_right, -100);
-        =}
-        reaction (drive) -> DRIVING, notify {=
-            lf_set(notify, "DRIVING");
-            lf_set_mode(DRIVING);
-            lf_set(power_left, 100);
-            lf_set(power_right, 100);
-        =}
-    }
-    
-    mode TURN_LEFT {
-        reaction (stop) -> STOPPED, notify {=
-            lf_set_mode(STOPPED);
-            lf_set(power_left, 0);
-            lf_set(power_right, 0);
-        =}
-    }
-
-    mode TURN_RIGHT {
-        reaction (stop) -> STOPPED, notify {=
-            lf_set_mode(STOPPED);
-            lf_set(power_left, 0);
-            lf_set(power_right, 0);
-        =}
-    }
-
-    mode AVOID_OBSTACLE {
-        reaction(turn_left) -> TURN_LEFT, notify {=
-            lf_set(notify, "LEFT");
-            lf_set_mode(TURN_LEFT);
-            lf_set(power_left, -100);
-            lf_set(power_right, 100);
-        =}
-        reaction (turn_right) -> TURN_RIGHT, notify {=
-            lf_set(notify, "RIGHT");
-            lf_set_mode(TURN_RIGHT);
-            lf_set(power_left, 100);
-            lf_set(power_right, -100);
-        =}
-    }
-
-    mode TAKE_PHOTO {
-        reaction(turn_left) -> TURN_LEFT, notify {=
-            lf_set(notify, "LEFT");
-            lf_set_mode(TURN_LEFT);
-            lf_set(power_left, -100);
-            lf_set(power_right, 100);
-        =}
-        reaction (turn_right) -> TURN_RIGHT, notify {=
-            lf_set(notify, "RIGHT");
-            lf_set_mode(TURN_RIGHT);
-            lf_set(power_left, 100);
-            lf_set(power_right, -100);
-        =}
-        reaction (stop) -> STOPPED, notify {=
-            lf_set_mode(STOPPED)
-            lf_set(power_left, 0);
-            lf_set(power_right, 0);
-        =}
-    }
-
-    mode DRIVING {
-        reaction (stop) -> STOPPED, notify {=
-            lf_set_mode(STOPPED)
-            lf_set(power_left, 0);
-            lf_set(power_right, 0);
-        =}
-    }
-}
 
 /**
  * Create an ArrowKeys reactor that listens for Bluetooth signals
@@ -194,39 +95,39 @@ reactor Robot {
 main reactor {
 
     display = new Display();
-    ble_inputs = new BluetoothReactor();
-    robot = new Robot();
+    keys = new ArrowKeys();
 
-        
-    reaction(startup) {=
-        APP_ERROR_CHECK(romi_init());
+    reaction(keys.up, keys.down, keys.left, keys.right) -> display.message {=
+        static char message[5] = "____\0";
+        int left = 0;
+        int right = 0;
+        if (keys.up->value) {
+            message[0] = 'U';
+            left += 120;
+            right += 120;
+        } else {
+            message[0] = '_';
+        }
+        if (keys.down->value) {
+            message[1] = 'D';
+            right -= 120;
+            left -= 120;
+        } else {
+            message[1] = '_';
+        }
+        if (keys.left->value) {
+            message[2] = 'L';
+            right += 120;
+        } else {
+            message[2] = '_';
+        }
+        if (keys.right->value) {
+            message[3] = 'R';
+            left += 120;
+        } else {
+            message[3] = '_';
+        }
+        lf_set(display.message, message);
+        romi_drive_direct(left, right);
     =}
-
-    reaction(ble_inputs.s1, ble_inputs.s2, ble_inputs.s3,
-        ble_inputs.s4, ble_inputs.s5, ble_inputs.s6) {=
-        if (ble_inputs.s1->value) {
-            lf_set(robot.turn_left, true);
-        }
-        else if (ble_inputs.s2->value) {
-            lf_set(robot.turn_right, true);
-        }
-        else if (ble_inputs.s3->value) {
-            lf_set(robot.stop, true);
-        }
-        else if (ble_inputs.s4->value) {
-            lf_set(robot.obstacle_in_way, true);
-        }
-        else if (ble_inputs.s5->value) {
-            lf_set(robot.take_photo, true);
-        }
-        else if (ble_inputs.s6->value) {
-            lf_set(robot.drive, true);
-        }
-    =}
-
-    reaction(robot.power_left, robot.power_right) {=
-        romi_direct_drive(robot.power_left->value,, robot.power_right->value);
-    =}
-
-    robot.notify -> display.message;
 }
