@@ -103,27 +103,29 @@ main reactor {
         int right = 0;
         if (keys.up->value) {
             message[0] = 'U';
-            left += 120;
-            right += 120;
+            left = 120;
+            right = 120;
         } else {
             message[0] = '_';
         }
         if (keys.down->value) {
             message[1] = 'D';
-            right -= 120;
-            left -= 120;
+            right = -120;
+            left = -120;
         } else {
             message[1] = '_';
         }
         if (keys.left->value) {
             message[2] = 'L';
-            right += 120;
+            right = 120;
+            left = -120;
         } else {
             message[2] = '_';
         }
         if (keys.right->value) {
             message[3] = 'R';
-            left += 120;
+            left = 120;
+            right = -120;
         } else {
             message[3] = '_';
         }
