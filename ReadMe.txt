@@ -1,10 +1,7 @@
 These files accompany the "TI Robot Systems Learning Kit MAX" 
 Built 7/31/2019 by Valvano and Valvano
 
-Most of the folders contain CCS projects, with the following exceptions
-1) The documentation folder contains html description of the modules and functions (open TI-RSLK_MAX_1_00_00_Software_Documentation.html)
-2) The datasheets folder contains data sheets for components used in this curriculum
-3) The inc folder contains shared files. For example, code you use in one lab that you will need in the next lab will be located in the inc folder. The inc folder also contains starter code used throughout the curriculum.
-4) TExaSdisplay is a Windows application that implements a serial terminal, oscilloscope and logic analyzer.
+Additionally the lf-buckler directory is cloned from https://github.com/icyphy/lf-buckler using the Fall 2022 version of EECS149 as reference, and some labs completed
 
 
+/surveyorbot pulls references from various online sources along with opencv documentation on how to use various functions.
